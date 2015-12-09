@@ -1,0 +1,32 @@
+<table width="770" border="0" cellspacing="0" cellpadding="0" align="center">
+  <tr bgcolor="#333366" valign="bottom"> 
+    <td bgcolor="#111144" height="29" 
+    colspan="2"><img src="http://db.cs.berkeley.edu/jmh/img/ucbseal.gif" 
+    width=90></td>
+    <td height="29" colspan="1"><a href="index.php"><img
+    src="images/title-bc.png" height="60"></a></td>
+  </tr>
+  <tr> 
+    <td width=100 valign="bottom" height="23" style="font-weight:bold"
+    bgcolor="#AAAA00">&nbsp;&nbsp;<img src="images/nav.png" width=90 ></td>
+    <td colspan="2" width="393" valign="bottom" style="font-weight:bold" bgcolor="#FFFF00">
+    </td>
+<!--    <td width=100 valign="bottom" style="font-weight:bold" --
+  --    bgcolor="#666699" --
+  --    bgcolor="gray">&nbsp;&nbsp;<img src="images/links.jpg" --
+  --    width="128" height="16"></td> -->
+  </tr>
+  <tr>
+    <td width=100 valign="top" height="103" style="font-weight:bold" bgcolor="gray"> 
+      <table width="100%" border="0" cellspacing="0" cellpadding="10">
+        <tr> 
+          <td valign="top">
+<?php include "menu.inc"; ?>
+          </td>
+        </tr>
+      </table>
+    </td>
+    <td width="393"colspan="2" valign="top" style="font-weight:bold" bgcolor="#FFFFFF" rowspan="2"> 
+      <table width="100%" border="0" cellspacing="0" cellpadding="10">
+        <tr> 
+          <td><font  color="#000033" >

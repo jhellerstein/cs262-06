@@ -1,0 +1,642 @@
+<!
+DOCTYPE html PUBLIC "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+  <title>Granularity of Locks and Degrees of Consistency</title>
+</head>
+<body>
+<table border="0" cols="2" width="100%">
+  <tbody>
+    <tr>
+      <td><b>Advanced Topics in Computer Systems</b></td>
+      <td><b></b>&nbsp;</td>
+    </tr>
+    <tr>
+      <td><b>Joe Hellerstein &amp; Timothy Roscoe</b></td>
+      <td><br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>  Multi-Granularity Locking</h2>
+ <b>Some implementation background (not in reading):</b> 
+<ul>
+ <li> Locks vs. Latches</li>
+  
+  <ul>
+ <li> locks assure logical (i.e. xactional) consistency of data.&nbsp; They
+are implemented via a lock table, held for a long time (e.g. 2PL), and part 
+of the deadlock detection mechanism.</li>
+  <li> latches are like semaphores.&nbsp; They assure physical consistency
+of data and resources, which are not visible at the transactional level (e.g. 
+latch a frame in a buffer pool).&nbsp; They are not subject to 2PL (usually 
+held for a very short time), and the deadlock detector doesn't know about 
+them (and therefore...?).</li>
+  <li> Acquiring a latch is much cheaper than acquiring a lock (10s vs. 100s
+of instructions in the no-conflict case)</li>
+  
+    <ul>
+ <li> latch control info is always in VM in a fixed place</li>
+  <li> lock tables are dynamically managed (can have a lock per tuple!),
+so data structure mgmt on lock/release is more complex</li>
+ 
+    </ul>
+ 
+  </ul>
+  <li> Lock table is a hashed main-mem structure</li>
+  <li> Lock/Unlock must be atomic operations (protected by latches or critical 
+sections)</li>
+  <li> typically costs several hundred instructions to lock/unlock an item</li>
+  <li> Lock Upgrades</li>
+  
+  <ul>
+ <li> suppose T1 has an S lock on P, T2 is waiting to get X lock on P, and
+now T3 wants S lock on P. Do we grant T3 an S lock?</li>
+ 
+  </ul>
+ 
+</ul>
+  
+<blockquote>No! (starvation, unfair, etc.) So...</blockquote>
+  
+  <ul>
+ 
+    <ul>
+ <li> Manage FCFS queue for each locked object with outstanding requests</li>
+  <li> all xacts that are adjacent and compatible are a compatible group</li>
+  <li> The front group is the granted group</li>
+  <li> group mode is most restrictive mode amongst group members</li>
+ 
+    </ul>
+  <li> Conversions: often want to convert (e.g. S to X for "test and modify"
+actions). Should conversions go to back of queue?</li>
+  <li> No! Instant deadlock. So put conversions right after granted group.</li>
+  
+  <li> More notes for the curious...</li>
+  
+    <ul>
+  <li> Most DBMSs have multiple lock request types, in part to help with
+that.&nbsp; E.g. Recall from ARIES:</li>
+  
+      <ul>
+ <li> conditional vs. unconditional lock requests (are you willing to wait?)</li>
+  <li> instant vs. manual vs. commit duration lock requests (wait, but plan
+to hold for different amounts of time)</li>
+ <li> More below on non-2PL locking schemes, and the consistency guarantees they provide</li>
+ 
+      </ul>
+
+ 
+    </ul>
+ 
+  </ul>
+  
+  <h3> </h3>
+  
+  <h3> Gray, et al.: Granularity of Locks</h3>
+ Theme: Correctness and performance 
+  <ul>
+ <li> Granularity tradeoff: small granularity (e.g. field of a tuple) means
+high concurrency but high overhead. Large granularity (e.g. file) means low 
+overhead but low concurrency.</li>
+  <li> Possible granularities:</li>
+  
+    <ul>
+ <li> DB</li>
+  <li> Areas</li>
+  <li> Files</li>
+  <li> Pages</li>
+  <li> Tuples (records)</li>
+  <li> fields of tuples</li>
+ 
+    </ul>
+  <li> Want hierarchical locking, to allow "large" xacts to set large locks,
+"small" xacts to set small locks</li>
+  <li> Problem: T1 S-locks a record in a file, then T2 X-locks the whole
+file. How can T2 discover that T1 has locked the record?</li>
+  <li> Solution: "Intention" locks</li>
+  
+    <table border="1" cellspacing="0" cellpadding="0" width="250" hspace="15">
+ <tbody>
+        <tr>
+ <td valign="Top" width="17%">&nbsp;</td>
+  <td valign="Top" width="16%">NL</td>
+  <td valign="Top" width="13%">IS</td>
+  <td valign="Top" width="14%">IX</td>
+  <td valign="Top" width="12%">S</td>
+  <td valign="Top" width="17%">SIX</td>
+  <td valign="Top" width="12%">X</td>
+ </tr>
+  <tr>
+ <td valign="Top" width="17%">NL</td>
+  <td valign="Top" width="16%">&nbsp;</td>
+  <td valign="Top" width="13%">&nbsp;</td>
+  <td valign="Top" width="14%">&nbsp;</td>
+  <td valign="Top" width="12%">&nbsp;</td>
+  <td valign="Top" width="17%">&nbsp;</td>
+  <td valign="Top" width="12%">&nbsp;</td>
+ </tr>
+  <tr>
+ <td valign="Top" width="17%">IS</td>
+  <td valign="Top" width="16%">&nbsp;</td>
+  <td valign="Top" width="13%">&nbsp;</td>
+  <td valign="Top" width="14%">&nbsp;</td>
+  <td valign="Top" width="12%">&nbsp;</td>
+  <td valign="Top" width="17%">&nbsp;</td>
+  <td valign="Top" width="12%">&nbsp;</td>
+ </tr>
+  <tr>
+ <td valign="Top" width="17%">IX</td>
+  <td valign="Top" width="16%">&nbsp;</td>
+  <td valign="Top" width="13%">&nbsp;</td>
+  <td valign="Top" width="14%">&nbsp;</td>
+  <td valign="Top" width="12%">&nbsp;</td>
+  <td valign="Top" width="17%">&nbsp;</td>
+  <td valign="Top" width="12%">&nbsp;</td>
+ </tr>
+  <tr>
+ <td valign="Top" width="17%">S</td>
+  <td valign="Top" width="16%">&nbsp;</td>
+  <td valign="Top" width="13%">&nbsp;</td>
+  <td valign="Top" width="14%">&nbsp;</td>
+  <td valign="Top" width="12%">&nbsp;</td>
+  <td valign="Top" width="17%">&nbsp;</td>
+  <td valign="Top" width="12%">&nbsp;</td>
+ </tr>
+  <tr>
+ <td valign="Top" width="17%">SIX</td>
+  <td valign="Top" width="16%">&nbsp;</td>
+  <td valign="Top" width="13%">&nbsp;</td>
+  <td valign="Top" width="14%">&nbsp;</td>
+  <td valign="Top" width="12%">&nbsp;</td>
+  <td valign="Top" width="17%">&nbsp;</td>
+  <td valign="Top" width="12%">&nbsp;</td>
+ </tr>
+  <tr>
+ <td valign="Top" width="17%">X</td>
+  <td valign="Top" width="16%">&nbsp;</td>
+  <td valign="Top" width="13%">&nbsp;</td>
+  <td valign="Top" width="14%">&nbsp;</td>
+  <td valign="Top" width="12%">&nbsp;</td>
+  <td valign="Top" width="17%">&nbsp;</td>
+  <td valign="Top" width="12%">&nbsp;</td>
+ </tr>
+ 
+      </tbody>
+    </table>
+ 
+  </ul>
+  
+  <ul>
+ 
+    <ul>
+ <li> IS and IX locks</li>
+  <li> T1 obtains S lock on record in question, but first gets IS lock on
+file.</li>
+  <li> Now T2 cannot get X lock on file</li>
+  <li> However, T3 can get IS or S lock on file (the reason for distinguishing 
+IS and IX: if there were only I, T3 couldn&#8217;t get an S lock on file)</li>
+  <li> For higher concurrency, one more mode: SIX. Intuitively, you read
+all of the object but only lock some subparts. Allows concurrent IS locks
+(IX alone would not). Note: gives S access, so disallows IX to others.</li>
+  <li> requires that xacts lock items root to leaf in the hierarchy, unlock
+leaf to root</li>
+  <li> generalization to DAG of resources: X locks all paths to a node, S
+locks at least one.</li>
+ 
+    </ul>
+ 
+  </ul>
+  
+  <h3> Notes on Deadlock</h3>
+  
+  <ul>
+ <li> In OS world, deadlock usually due to errors or overloads</li>
+  <li> In DB/xact world with 2PL, they&#8217;re inherent.</li>
+  <li> Most common causes:</li>
+  
+    <ul>
+ <li> Differing access orders</li>
+ 
+    </ul>
+ 
+  </ul>
+  
+  <ul>
+ 
+    <ul>
+T1: X-lock P 
+      <p>T2: X-lock Q </p>
+      <p>T1: X-lock Q // block waiting for T2 </p>
+      <ul>
+T2: X-lock P // block waiting for T1
+      </ul>
+ 
+    </ul>
+ 
+  </ul>
+  
+  <ul>
+ 
+    <ul>
+ <li> lock-mode upgrades</li>
+ 
+    </ul>
+ 
+  </ul>
+  
+  <ul>
+ 
+    <ul>
+T1: S-lock P 
+      <p>T2: S-lock P </p>
+      <p>T1: convert S-lock on P to X-lock // block </p>
+      <p>T2: convert S-lock on P to X-lock // block</p>
+    </ul>
+ 
+  </ul>
+  
+  <ul>
+ <li> Usual DB solution: deadlock detection (other option: deadlock avoidance)</li>
+  
+    <ul>
+ <li> Use "waits-for" graph and look for cycles</li>
+  <li> Abort/restart some transaction along the cycle</li>
+  <li> Empirically, in actual systems the waits-for graph shows:</li>
+  
+      <ul>
+ <li> cycles fairly rare</li>
+  <li> cycle length usually 2, sometimes 3, virtually never &gt;3</li>
+  <li> use DFS to find cycles</li>
+ 
+      </ul>
+  <li> When to look for cycles?</li>
+ 
+    </ul>
+ 
+  </ul>
+  
+  <ol type="a">
+ 
+    <ul>
+ 
+      <ul>
+ 
+        <ul>
+ <li> whenever a xact blocks</li>
+  <li> periodically</li>
+  <li> never (use timeouts)</li>
+ 
+        </ul>
+ 
+      </ul>
+ 
+    </ul>
+ 
+  </ol>
+  
+  <blockquote> 
+    <blockquote>Typically, in centralized systems, run deadlock detection
+whenever blocking occurs.&nbsp;&nbsp; Arguably this is cheap: most recently
+blocked transaction T must be the one that caused the deadlock, so just DFS
+starting from T.<br>
+ In distributed systems, even this can be expensive, so often do periodic 
+detection (more later) 
+</blockquote></blockquote>
+      <ul>
+ <li> Who to restart ("victim selection")</li>
+ 
+      </ul>
+  
+      <ol type="a">
+ 
+        <ol type="a">
+ 
+          <ul>
+ <li> current blocker</li>
+  <li> youngest XACT</li>
+  <li> least resources used</li>
+  <li> fewest locks held (common)</li>
+  <li> fewest number of restarts</li>
+ 
+          </ul>
+ 
+        </ol>
+ 
+      </ol>
+
+
+<h2>
+Degrees of Consistency (a/k/a Isolation Levels)</h2>
+Despite all the discussion of ACID, sometimes it's nice to relax
+semantic
+guarantees for the sake of performance.&nbsp; The goal is to let
+individual
+transactions choose sensible ways of doing this <i>without</i> messing
+up the database or the other transactions that do care. I.e. preserve
+everybody's desired isolation.
+<h3>Gray, et al.: Degrees of Consistency</h3>
+First, a definition: A write is <i>committed</i> when transaction if
+finished;
+otherwise, the write is <i>dirty</i>.
+<p><b>A Locking-Based Description of Degrees of Consistency:</b>
+</p>
+<p>This is not actually a description of the degrees, but rather of how
+to achieve them via locking. But it&#8217;s (operationally) well-defined.
+</p>
+<ul>
+  <li>
+Degree 0: set short write locks on updated items ("short" = length of
+action)</li>
+  <li>
+Degree 1: set long write locks on updated items ("long" = EOT)</li>
+  <li>
+Degree 2: set long write locks on updated items, and short read locks
+on
+items read</li>
+  <li>
+Degree 3: set long write and read locks</li>
+</ul>
+<p></p>
+<p><b>A Dirty-Data Description of Degrees of Consistency</b>
+</p>
+<p>Transaction T "sees degree X consistency" if...
+</p>
+<ul>
+  <li>Degree 0: All writes are atomic</li>
+  <li>Degree 1:
+  <ul>
+    <li>
+T sees degree 0 consistency, and</li>
+    <li>T does not commit any writes before EOT</li>
+    <li>In sum, no conflicts will ever occur involving T's writes</li>
+    <li>IN ANSI-SQL Standard this is called READ UNCOMMITTED for obvious
+        reasons.</li>
+  </ul>
+  <li>Degree 2:
+  <ul>
+    <li>T sees degree 1 consistency, and</li>
+    <li>T does not read dirty data of other transactions (we don't cause
+        W<sub>S</sub>R<sub>T</sub> conflicts) </li>
+    <li>In ANSI-SQL this is called READ COMMITTED for obvious reasons.
+  </ul>
+  <li>Degree 3:
+  <ul>
+    <li> T sees degree 2 consistency, and</li>
+    <li> Other transactions do not dirty any data read by T before T completes
+         (no R<sub>T</sub>W<sub>S</sub>) conflicts.</li>
+    <li>In sum, no conflicts allowed!</li>
+    <li>In ANSI-SQL this is called REPEATABLE READ.</li>
+  </ul>
+</ul>
+<p>
+<b>Examples of Inconsistencies prevented by Various Degrees</b>
+<ul>
+  <li>Garbage data:
+      <ul>
+      <li>Concurrent actions W<sub>T1</sub>(X) || W<sub>T2</sub>(X)</li>
+      <li>Neither T1 nor T2 controls the value of X; could in fact be
+      interleaved or corrupted.</li>
+      <li><i>Solution</i>: force <i>every transaction</i> to set short
+      write locks (degree 0).  Note that device-level enforcement is
+      insufficient for objects bigger than the device interface
+      (e.g. files, tables)</li>
+      </ul>
+  </li>
+  <li>Lost Updates:
+      <ul>
+      <li>R<sub>T1</sub>(X); W<sub>T2</sub>(X); W<sub>T1</sub>(X);
+      Commit<sub>T1</sub>; Commit<sub>T2</sub>.</li>
+      <li> <i>Alternate Problem:</i> suppose T2 aborts!</li>
+      <li><i>Solution</i>: force <i>every transaction</i> set long
+      write locks (degree 1).  Think of them as "advisory" for
+      reads (up to each transaction), but binding for writes.</li>
+      </ul>
+  </li>
+  <li>Dirty Reads:</li>
+      <ul>
+      <li>W<sub>T1</sub>(X); R<sub>T2</sub>(X); Abort<sub>T1</sub>.</li>
+      <li>Now T<sub>2</sub>'s read is bogus.</li>
+      <li><i>Solution</i>: set long write locks and short read locks
+      (degree 2).  Attractive for long-running queries
+      (esp. aggregates).</li>
+      <li>Note that there are no dirty reads in the Lost Update
+      example above.</li>
+     </ul>
+  </li>
+  <li>Unrepeatable ("Fuzzy") reads:</li>
+      <ul>
+      <li>R<sub>T1</sub>(X); W<sub>T2</sub>(X); Commit<sub>T2</sub>; R_<sub>T1</sub>(X)</li>
+      <li>Now T<sub>2</sub> has read 2 different values of X.</li>
+      <li><i>Solution</i>: long read locks (degree 3).</li>
+     </ul>
+  </li>
+  <li>Phantoms:</li>
+      <ul>
+      <li>R<sub>T1</sub>(range [x-y]); Insert<sub>T2</sub>(Z | x &lt;
+      Z &lt y); Commit<sub>T2</sub>; R_<sub>T1</sub>(range [x-y])</li>
+      <li>Z is a "phantom" data item (eek!)</li>
+      <li><i>Solution</i>: ??  Note that <i>Degree 3 row-level locking
+      does not prevent phantoms!</i>  </li>
+      <li>In ANSI-SQL, if you prevent phantoms and provide repeatable
+      read, it's called a SERIALIZABLE consistency level.
+     </ul>
+  </li>
+</ul>
+<b>A note:</b> ANSI-SQL standard talks about the phenomena of Dirty
+Read, Non-Repeatable Read, and Phantoms.  
+<br>
+<b>To reiterate</b>: if everybody sees at least Degree 1, than different
+transactions can <i>choose</i> what degree they wish to "see" without
+worry.&nbsp; I.e. can have a mixture of levels of consistency.
+
+
+<h3>Two more consistency levels used in practice</h3>
+<ul>
+<li><b>Snapshot Isolation (called SERIALIZABLE by Oracle)</b>.  Widely
+  used (and now implemented in MS SQL Server 2005 too.) 
+  <ul>
+    <li><i>Goal:</i> never delay R/O transactions,  and try to ensure
+  that they see consistent data if updating transactions are
+  serializable.</li>
+    <li><i>Idea:</i> Conceptually, transaction Ti reads data from the
+    committed state of the DB as of the time start(Ti), except for its
+    own writes, which it reads from its own versions.  Make sure this
+    works with indexes, etc.</li>
+    <li><i>Detail:</i> Have to obey the "First Committer Wins" rule on
+    any WW conflicts (including index updates).</li>
+    <li><i>Implementation:</i>Oracle keeps a "rollback segment" for
+    getting old versions.  First Committer rule enforced by write
+    locks at update time, and waiters on the lock abort (Oracle's
+    "serialization error") if the holder commits.  This is really
+    "First Updater Wins", since locking means that update order
+    induces a commit order.  </li>
+    <li><i>Semantic problem</i>: this is not really Serializable.
+    Why?  Hint: the basic problem is that reads all happen at start
+    transaction, and writes at commit.  With 2 interleaved
+    transactions, this can lead to to violations of multi-object
+    consistency rules (e.g. think about the constraint
+    sum(checking,savings) > 0).  Can even cause unserializable
+    behavior exhibited by read-only transactions!  This is poorly
+    understood in the field.  (IBM documents this problem whenever
+    they get the chance!)</li>
+  </ul>
+  <li><b>Cursor Stability</b>.  Designed to prevent lost updates.
+  This is an operational definition that 
+  takes into account the interactive API to transactions.  SQL
+  provides a row-at-a-time API to in-flight queries, called
+  "cursors". Cursor stability sets a read-lock on a row as long as
+  the cursor is  "pointing" to the row.  Note that a user can open
+  multiple cursors in the same transaction, and can thereby do operational
+  concurrency control at application level (yuck!)
+  </li>
+</ul>
+<h3>Adya, et al. : Generalized Isolation Levels</h3> Gray et al's
+definitions (and the resulting ANSI standards) are not
+implementation-independent, and semantics are really only well-defined
+in the operational locking definition.  Note the "dirty-data"
+descriptions above forbidding conflicts entirely, rather than
+describing bad <i>interactions of conflicts</i>.  Seems too
+restrictive, no?
+
+
+<p>Goal:  find implementation-independent semantic isolation levels which
+are as permissive as possible (most possible <i>schedules</i> allowed).
+</p>
+<p><b>Key insight: </b>many dependencies are multi-object.&nbsp;
+Capture those, and you'll get the right semantics.  To be as
+  permissive as we can, we talk about <i>versions</i> of objects
+  coexisting (don't count on the Haerder/Reuter DIRECT setting.)
+</p>
+<p>Conflicts in Adya's Serialization Graphs:
+</p>
+<ul>
+  <li>
+Read dependencies (WR):</li>
+  <ul>
+    <li>
+Def'n: Ti <i>changes the matches </i>of Tj for Tj's predicate-based
+reads
+if Ti installs a new version that either adds to or deletes from one of
+Tj's read predicates.</li>
+    <li>
+Tj <i>directly read depends</i> on Ti if Ti directly installs some
+version
+that Tj subsequently reads (<i>item-read-depends</i>), or if Ti changes
+the matches of Tj.</li>
+    <li>
+A way to think about predicate-based reads or phantoms: imagine that
+every
+object is versioned, there are "ghost versions" of objects before
+they're
+born and after they die.&nbsp; Predicate-based reads look at all latest
+versions of all objects (including ghosts), and what matters is the set
+of objects that do or do not match.&nbsp; See example on page 7 of the
+paper for <i>H<sub>pred-read</sub></i></li>
+  </ul>
+  <li>
+Anti-dependencies (RW)</li>
+  <ul>
+    <li>
+Def'n: Tj <i>overwrites a predicate-based read</i> by Ti if Tj
+installs
+a new version of an object in the read by Ti that changes the matches
+of
+Ti.</li>
+    <li>
+Tj <i>directly anti-depends</i> on Ti if Ti reads an object and Tj
+installs
+the next version of that object ("first invalidator"), or if Tj's
+install of a version changes the matches of a read by Ti.</li>
+  </ul>
+  <li>
+Write dependencies (WW)</li>
+  <ul>
+    <li>
+Tj <i>directly write-depends</i> on Ti if Ti installs a version of an
+object, and Tj installs the next version ("first invalidator").&nbsp;
+(Note there's no predicate-based version of write dependencies, since
+database updates are read-predicate/write-tuple.  What might it mean
+to write a predicate?).</li>
+  </ul>
+</ul>
+Direct Serialization Graph:
+<ul>
+  <li>
+nodes are committed xacts</li>
+  <li>
+edges are directed by time, labeled WR, RW, or WW.</li>
+</ul>
+Now we can talk about isolation in terms of serialization graphs and
+"histories"
+("schedules"), NOT implementation.
+<p><b>Adya's Isolation Levels</b>
+<br>
+Try to Generalize Gray's.&nbsp; PL-x = "Portable Level x".
+</p>
+<ul>
+  <li>
+PL-1: try to serialize based on writes alone (ignore reads) -- ensure
+that updates are not interleaved.</li>
+  <ul>
+    <li>
+Specifically, <b>no cycles containing only WW edges are allowed.</b></li>
+    <li>
+Note: <i>more permissive</i> than Gray's Degree 1: allows concurrenct
+xacts to modify the same object...just ensure no cycles.</li>
+    <li>
+But obvious locking implementation of PL-1: long write locks.</li>
+  </ul>
+  <li>
+PL-2: avoid aborted reads</li>
+  <ul>
+    <li>
+Specifically, <b>no aborted reads</b>, <b>no intermediate reads,</b> and
+      <b>no circular information flow (dependency-edge cycles in
+      serialization graph)</b></li>  
+    <li>
+       Note: cascaded aborts and/or commit delays prevent aborted
+       reads
+    </li>
+    <li>
+       Note: no intermediate reads means that committed xactions read only
+       committed data
+   </li>
+    <li>
+      <i>More permissive </i>than Degree 2, allows reads from
+      uncommitted xacts (final versions of eventually-committed xacts!)</li>
+    <li> Obvious locking implementation: long write locks, short read locks</li>
+  </ul>
+  <li> PL-3: prevent xactions from committing if they perform inconsistent
+      reads or writes</li>
+  <ul>
+    <li>
+        Specifically, do <b>PL-2 AND no anti-dependency cycles</b>
+    </li>
+    <li>
+      <i>More permissive </i>than Degree 3, since a modifying xact can
+	  update an object previously read by another uncommited xact</li>
+    <li>
+Obvious locking implementation: 2PL</li>
+  </ul>
+  <li>
+PL-2.99: generalize "REPEATABLE READ"</li>
+  <ul>
+    <li>REPEATABLE READ was long locks for everything except predicate reads
+        (phantoms can happen)</li>
+    <li>
+PL-2.99 is <b>PL-2 + no cycles with item-anti-dependency edges</b>.
+Cycles involving predicate-read overwrites are OK.</li>
+  </ul>
+</ul>
+Modeling Mixed-Mode Systems
+<ul>
+  <li>
+Mixed serialization graph, only contains dependencies relevant to a
+transaction's
+level (or obligatory dependencies required by other transactions'
+modes).</li>
+</ul>
+</body>
+</html>

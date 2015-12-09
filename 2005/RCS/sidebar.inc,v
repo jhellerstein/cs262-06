@@ -1,0 +1,36 @@
+head	1.1;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2005.09.27.17.45.58;	author joeh;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@	<div class="sidebar" id="sidebar">
+		<ul class="menu">
+		<li><a href="p2column.php">Overview</a></li>
+		<li><a href="p2people.php">People</a></li>
+		<li><a href="p2pubs.php">Papers</a></li>
+		<li><a href="p2talks.php">Talks</a></li>
+		</ul>
+
+    <div class="other">
+		<p>A joint project of UC Berkeley and Intel Research.</p>
+	</div>
+
+	</div>
+@

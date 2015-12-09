@@ -1,0 +1,423 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta name="GENERATOR" content="Microsoft FrontPage 3.0">
+  <meta name="GENERATOR"
+ content="Mozilla/4.04 [en] (Win95; I) [Netscape]">
+  <title>SQL Query Optimization</title>
+  <meta name="Microsoft Border" content="tb, default">
+</head>
+<body>
+<!
+DOCTYPE html PUBLIC "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+  <title>Granularity of Locks and Degrees of Consistency</title>
+</head>
+<body>
+<table border="0" cols="2" width="100%">
+  <tbody>
+    <tr>
+      <td><b>Advanced Topics in Computer Systems</b></td>
+      <td><b></b>&nbsp;</td>
+    </tr>
+    <tr>
+      <td><b>Joe Hellerstein &amp; Timothy Roscoe</b></td>
+      <td><br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<h2>SQL Query Optimization</h2>
+<h3>Basics</h3>
+<b>
+</b>
+<p><b>Given</b>: A query joining <em>n</em> tables <br>
+<b>The "Plan Space": </b>Huge number of alternative, semantically
+equivalent
+plans. <br>
+<b>The Perils of Error</b>: Running time of plans can vary by many
+orders of magnitude <br>
+<b>Ideal Goal</b>: Map a declarative query to the most efficient plan
+tree. <br>
+<b>Conventional Wisdom</b>: You&#8217;re OK if you avoid the rotten plans. <br>
+<b>Industrial State of the art</b>: Most optimizers use System R
+technique and work
+"OK" up to about 10 joins. </p>
+<ul>
+  <p>Wide variability in handling complex queries with aggregation,
+subqueries, etc. Wait for rewrite paper.</p>
+</ul>
+<h3>Approach 1: The Optimization Oracle</h3>
+<p>(<i>definitely </i>not to be confused with the company of the same
+name) <br>
+You&#8217;d like to get the following information, but in 0 time: </p>
+<ul>
+  <li>Consider each possible plan in turn.</li>
+  <li>Run it &amp; measure performance.</li>
+  <li>The one that was fastest is the keeper.</li>
+</ul>
+<h3>Approach 2: Make Up a Heuristic &amp; See if it Works</h3>
+<p>University INGRES </p>
+<ul>
+  <li>always use NL-Join (indexed inner whenever possible)</li>
+  <li>order relations from smallest to biggest</li>
+</ul>
+<p>Oracle 6 </p>
+<ul>
+  <li>"Syntax-based" optimization</li>
+</ul>
+<h3>OK,OK. Approach 3: Think!</h3>
+<p>Three issues: </p>
+<ul>
+  <li>define plan space to search</li>
+  <li>do cost estimation for plans</li>
+  <li>find an efficient algorithm to search through plan space for
+"cheapest" plan</li>
+</ul>
+<p>Selinger &amp; the System R crowd the first to do this right. The
+Bible of Query
+Optimization. <br>
+&nbsp; </p>
+<h3>SQL Refresher</h3>
+<pre><tt>SELECT {DISTINCT} &lt;list of columns&gt;</tt>  <br><tt>FROM &lt;list of tables&gt;</tt>  <br><tt>{WHERE &lt;list of "Boolean Factors" (predicates in CNF)&gt;}</tt>  <br><tt>{GROUP BY &lt;list of columns&gt;</tt>  <br><tt>{HAVING &lt;list of Boolean Factors&gt;}}</tt>  <br><tt>{ORDER BY &lt;list of columns&gt;};</tt>  </pre>
+<p>Semantics are: </p>
+<blockquote>
+  <ol>
+    <li>take Cartesian product (a/k/a cross-product) of tables in FROM
+clause, projecting to only those columns that appear in other clauses</li>
+    <li>if there&#8217;s a WHERE clause, apply all filters in it</li>
+    <li>if there&#8217;s a GROUP BY clause, form groups on the result</li>
+    <li>if there&#8217;s a HAVING clause, filter groups with it</li>
+    <li>if there&#8217;s an ORDER BY clause, make sure output is in the right
+order</li>
+    <li>if there&#8217;s a DISTINCT modifier, remove dups</li>
+  </ol>
+</blockquote>
+<p>Of course the plans don&#8217;t do this exactly; query optimization
+interleaves 1 &amp;
+2 into a plan tree. GROUP BY, HAVING, DISTINCT and ORDER BY are applied
+at the end, pretty
+much in that order. <br>
+&nbsp; </p>
+<h3>Plan Space</h3>
+<p>All your favorite query processing algorithms: </p>
+<ul>
+  <li>sequential &amp; index (clustered/unclustered) scans</li>
+  <li>NL-join, (sort)-merge join, hash join</li>
+  <li>sorting &amp; hash-based grouping</li>
+  <li>plan flows in a non-blocking fashion with get-next iterators</li>
+</ul>
+<p>Logical equivalences:<br>
+</p>
+<ul>
+  <li>Joins are commutative and associative (reorderable) (modulo
+avoiding Cartesian products)</li>
+  <li>Selection and projection can be "pushed" below joins (modulo
+relevant info being preserved)<br>
+  </li>
+</ul>
+<p>Note some assumptions folded in here: </p>
+<ul>
+  <li>selections are always"pushed down"</li>
+  <li>projections are always "pushed down"</li>
+  <li>all this is only for single query blocks</li>
+</ul>
+<p>Some other popular assumptions (System R) </p>
+<ul>
+  <li>only left-deep plan trees</li>
+  <li>avoid Cartesian products</li>
+</ul>
+<h3>Cost Estimation</h3>
+<p>The soft underbelly of query optimization. </p>
+<p>Requires: </p>
+<ul>
+  <li>estimation of costs for each operator based on input cardinalities</li>
+  <ul>
+    <li>both I/O &amp; CPU costs to some degree of accuracy</li>
+  </ul>
+  <li>estimation of predicate selectivities to compute cardinalities
+for next step</li>
+  <li>assumption of independence across predicates</li>
+  <li>decidedly an inexact science.</li>
+  <li>"Selingerian" estimation (no longer state of the art, but not
+really so far off.)</li>
+  <ul>
+    <li># of tuples &amp; pages</li>
+    <li># of values per column (only for indexed columns)</li>
+    <ul>
+      <li>These estimations done periodically (why not all the time?)</li>
+    </ul>
+    <li>back of envelope calculations: CPU cost is based on # of RSS
+calls, no distinction between Random and Sequential IO</li>
+    <li>when you can&#8217;t estimate, use the "wet finger" technique</li>
+  </ul>
+  <li>New alternative approaches:</li>
+  <ul>
+    <li>Sampling: so far only concrete results for base relations</li>
+    <li>Histograms: Common in industry, much interesting research.</li>
+    <li>Sketches: randomized "synopses" that can be used for estimation.</li>
+  </ul>
+  <li>Note connection to approximate query processing<br>
+  </li>
+</ul>
+<h3>Searching the Plan Space</h3>
+<ul>
+  <li>Exhaustive search</li>
+  <li>Dynamic Programming (prunes useless subtrees): System R</li>
+  <li>Top-down, transformative version of DP: Volcano, Cascades (used
+in MS SQL Server?)</li>
+  <li>Randomized search algorithms (e.g. Ioannidis &amp; Kang)</li>
+  <li>Job Scheduling techniques</li>
+</ul>
+<h3>The System R Optimizer&#8217;s Search Algorithm</h3>
+<p>Look only at left-deep plans: there are <em>n!</em> plans (not
+factoring in choice of
+join method) <br>
+<b>Observation</b>: many of those plans share common prefixes, so don&#8217;t
+enumerate all
+of them <br>
+Sounds like a job for &#8230; Dynamic Programming! </p>
+<ol>
+  <li>Find all plans for accessing each base relation</li>
+  <ul>
+    <li>Include index scans when available on "SARGable" predicates</li>
+  </ul>
+</ol>
+<ol start="2">
+  <li>For each relation, save cheapest unordered plan, and cheapest
+plan for each "interesting order". Discard all others.</li>
+  <li>Now, try all ways of joining all pairs of 1-table plans saved so
+far. Save cheapest unordered 2-table plans, and cheapest "interesting
+ordered" 2-table plans.</li>
+  <ul>
+    <li>note: secondary join predicates are just like selections that
+can&#8217;t be pushed down</li>
+  </ul>
+</ol>
+<ol start="4">
+  <li>Now try all ways of combining a 2-table plan with a 1-table plan.
+Save cheapest unordered and interestingly ordered 3-way plans. You can
+now throw away the 2-way plans.</li>
+  <li>Continue combining <em>k</em>-way and 1-way plans until you have
+a collection of full plan trees</li>
+  <li>At top, satisfy GROUP BY and ORDER BY either by using
+interestingly ordered plan, or by adding a sort node to unordered plan,
+whichever is cheapest.</li>
+</ol>
+<p>&nbsp; <br>
+Some additional details: </p>
+<ul>
+  <li>don&#8217;t combine a <em>k</em>-way plan with a 1-way plan if there&#8217;s
+no predicate between them, unless all predicates have been used up
+(i.e. postpone Cartesian products)</li>
+  <li>Cost of sort-merge join takes existing order of inputs into
+account.</li>
+</ul>
+<b>
+</b>
+<p><b>Evaluation:</b> </p>
+<ul>
+  <li>Only brings complexity down to about <em>n</em>2<sup><em>n-</em>1</sup>,
+and you store Choose(<em>n</em>, <em>n</em>/2) plans</li>
+  <li>But no-Cartesian-products rule can make a big difference for some
+queries.</li>
+  <li>For worst queries, DP dies at 10-15 joins</li>
+  <li>adding parameters to the search space makes things worse (e.g.
+expensive predicates, distribution, parallelism, etc.)</li>
+</ul>
+<p>Simple variations to improve plan quality: </p>
+<ul>
+  <li>bushy trees:&nbsp; (2(<em>n</em>-1))! / (<em>n</em>-1)! plans, DP complexity is 3<em><sup>n</sup></em> - 2<sup><em>n</em>
++ 1</sup> + <em>n</em> + 1 need to store 2<em><sup>n</sup></em> plans
+(actually it&#8217;s worse for subtle reasons)</li>
+  <li>consider cross products: maximizes optimization time</li>
+</ul>
+<b>
+</b>
+<p><b>Subqueries 101: </b>Selinger does a very complete job with the
+basics. </p>
+<ul>
+  <li>subqueries optimized separately</li>
+  <li>uncorrelated vs. correlated subqueries</li>
+  <ul>
+    <li>uncorrelated subqueries are basically constants to be computed
+once in execution</li>
+    <li>correlated subqueries are like function calls</li>
+  </ul>
+</ul>
+<span style="font-weight: bold;"></span>
+<h2>Extensible Query Optimization</h2>
+In the 1980's and 1990's there was a lot of work on alternatives and
+extensions to the relational model (especially object-oriented DBs,
+later XML).&nbsp; In the 90's and 2000's, there is work on dataflow
+engines for networking (Click, P2) that look a lot like query
+processors.<br>
+<br>
+Challenge: design an extensible query optimizer that can be used for
+non-relational contexts.<br>
+<br>
+We read the <a href="http://citeseer.ist.psu.edu/cache/papers/cs/22828/http:zSzzSzwww.cs.brandeis.eduzSz~cs227bzSzpaperszSzextensible-volcano-icde93.pdf/graefe93volcano.pdf">Volcano paper</a> both because it is one of the 2 main examples
+of this work (the other being the <a href="http://portal.acm.org/citation.cfm?id=50204">optional</a> paper on Starburst), and
+because it presents an alternative search strategy to Selinger.&nbsp;
+The Volcano style is used in MS SQL Server (where Graefe now works),
+though it was based on the successor to Volcano, called Cascades.<br>
+<br>
+Core ideas:<br>
+<ul>
+  <li><span style="font-weight: bold;">Constraint: </span>Assume we
+have dataflow <span style="font-style: italic;">trees</span> (it's
+interesting to think about extending to multi-output DAGs and cyclic
+plans!)</li>
+  <li><span style="font-weight: bold;">Extensible Search Space: </span>Provide
+a mechanism to describe legal trees based on user-defined <span
+ style="font-style: italic;">rules</span>.&nbsp; Essentially these
+rules describe a "language" of op-code-based dataflow scripts that the
+query executor can understand.&nbsp; So these rules are essentially
+grammars.<br>
+  </li>
+  <li><span style="font-weight: bold;">Extensible dataflow properties: </span>We
+need to capture the properties of the output of a "subquery" (or
+"subtree"
+of the dataflow) in order to ensure we construct a semantically correct
+plan.&nbsp; I.e. need to describe in logical terms what the stream of
+data at the root should be.&nbsp; Since we want this to be extensible,
+we can't predetermine these properties, so allow for opaque
+user-defined <span style="font-style: italic;">Abstract Data Types.</span>&nbsp;
+The rules and property ADTs must be written to construct and maintain
+these properties correctly.<br>
+  </li>
+  <li><b>Extensible cost estimation</b>: There needs to be an
+  extensible way (based on ADTs) to provide cost information to
+  compare the quality of two plans.  Preferably this should not be a
+  single number; costs can be multidimensional (e.g. response time and
+  resource consumption.)</li>
+  <li><span style="font-weight: bold;">Search algorithm: </span>Given
+the above, the extensible optimizer should be able to search through
+the space of equivalent queries that are supported by the rules.&nbsp;
+Dynamic programming is used to do this more efficiently than raw
+enumeration.&nbsp; Two variants on dynamic programming: <br>
+  </li>
+  <ul>
+    <li>Starburst does this by using the rules constructively (a.k.a <span
+ style="font-style: italic;">bottom-up</span> or <span
+ style="font-style: italic;">forward-chaining</span> search) a la
+Selinger, to build increasingly larger plans.&nbsp; <br>
+    </li>
+    <li>Volcano does this with goal-directed search (a.k.a. <span
+ style="font-style: italic;">top-down</span> or <span
+ style="font-style: italic;">backward-chaining</span> search), starting
+with the plan output, and recursing on all possible subtrees.</li>
+  </ul>
+</ul>
+Some details:<br>
+<ul>
+  <li>Useful to separate <span style="font-style: italic;">logical </span>properties
+(e.g. the relational description of a subresult including subquery and
+schema), <span style="font-style: italic;">physical</span> properties
+(e.g. the order or partitioning of data in the stream), and <span
+ style="font-style: italic;">estimated </span>properties (e.g. the
+expected number of tuples or data distribution of values.)&nbsp;
+Volcano conflates logical and estimated.</li>
+  <li>There's also an assumption that one has a set of <span
+ style="font-style: italic;">logical</span> operators (e.g. relational
+algebra) and <span style="font-style: italic;">implementation</span>
+or <span style="font-style: italic;">physical</span> operators (e.g.
+hashjoin).&nbsp; Both techniques accomodate physical operators with no
+logical equivalents (particularly <span style="font-style: italic;">sort</span>,
+but also things like distribution of tuples across nodes).<br>
+  </li>
+  <li>In Volcano terminology, <span style="font-style: italic;">transformation
+rules</span> specify axioms for logical equivalences: e.g.
+commutativity and associativity of joins.&nbsp; <span
+ style="font-style: italic;">Implementation rules</span> talk about how
+to map logical operators to physical.</li>
+  <li>Physical properties are encapsulated in an ADT.&nbsp; Special
+operators called <span style="font-style: italic;">enforcers</span>
+(or <span style="font-style: italic;">glue</span> in Starburst) may be
+needed to do physical mappings on the data streams.&nbsp; A detail in
+Volcano is that to achieve a subgoal with a particular physical
+property (e.g. a sort order), you can either <br>
+  </li>
+  <ol>
+    <li>Find an implementation of a logical operator that produces that
+physical property (e.g. sort-merge join), or</li>
+    <li>Choose any implementation of a logical operator (e.g.
+hash-join), and then use an enforcer (e.g. sort)</li>
+  </ol>
+But be careful to avoid doing both (<span style="font-style: italic;">exluding
+physical property vector</span>) (Note: this issue doesn't come up in
+the Starburst bottom-up approach.)</li>
+  <li>Checking for properties is done with an <i>applicability
+  function</i> for the algorithm or enforcer.
+</ul>
+
+Given these building blocks, Volcano works "top-down" as follows.  It
+will maintain a hashtable of existing subplans (hashed on
+physical/logical properties) to memoize previous work.
+<ul>
+<li>Consider the "top" of the query plan tree.  We know the logical
+  and physical properties from the query specification.  Assume
+  that a <i>budget limit</i> on the costs may be given to prune
+  search. Use our rules and properties to recurse as follows:
+  <ol>
+  <li>if the desired output is in the hashtable with cost below the
+  limit, us it.</li>
+  <li>else generate <i>all</i> subgoals based on:
+     <ol>
+      <li> applicable transformations</li>
+      <li> algorithms that give the required physical properties</li>
+      <li> enforcers that give the required physical properties</li>
+     </ol>
+   <li>Graefe speaks of ordering these by their "promise", which isn't
+   described in detail.</li>
+   <li>Apply the "move", update the resulting physical and logical
+   properties and costs.  Add result to the hashtable.  If cost is
+   still within budget, recurse (on root, or in the case of an
+   algorithm on its inputs).</li>
+   </ol>
+</ul>
+
+Some notes on this "top-down" exploration:
+<ul>
+<li> Budget limits can be very useful.  For example, if you can guess
+  the optimal budget limit, Volcano could radically prune the plan
+  space.</li>
+<li> Note that once <i>any</i> complete plan has been explored by the
+  optimizer, its cost can be used as a budget limit.</li>
+<li>The <i>promise</i> ordering of subgoals is critical to making this
+  work well!  If promise is computed as the sum of cost-so-far and
+  expected-cost-of-subtree, this is essentially what's
+  called A*-search in the AI literature, except that A* will quit
+  when it finds any complete plan. Volcano will explore all plans, but
+  can use the complete plan's cost to prune.</li>
+<li>Note that the generation of <i>all</i> subgoals at each step isn't
+  necessary.  In the Cascades optimizer that was the follow-on to
+  Volcano, this expansion was postponed and done on demand (as part of
+  the "promise" ordering).
+</ul>
+
+Because of this pruning, top-down can look at less of the plan space
+than bottom-up if it gets lucky.
+<br>
+<br>
+Parting thoughts:
+<ul>
+<li>Query optimization is a traditional "search" problem, and should be
+  broadly applicable to dataflow systems in general.</li>
+<li>Optimization does <i>not</i> rely on a declarative language.  As
+  seen in Volcano, it can be driven off transformation rules on
+  dataflow operators.  In fact, Cascades removes the hard distinction
+  between logical and physical operators and
+  transformations/implementation.</li>
+<li>Dataflow is becoming popular again outside the context of
+  databases:
+  witness <a
+  href="http://pdos.csail.mit.edu/click/">Click</i>, <a
+  href="http://p2.cs.berkeley.edu">P2</a>, and
+  Google's <a
+  href="http://labs.google.com/papers/mapreduce.html">Map/Reduce</a>. These
+  systems could all use an extensible optimizer infrastructure!</li>
+</ul>
+</body>
+</html>

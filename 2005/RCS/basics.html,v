@@ -1,0 +1,310 @@
+head	1.4;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2005.09.27.05.46.43;	author joeh;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2005.09.13.22.06.43;	author joeh;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2005.09.01.06.58.27;	author joeh;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.09.01.06.17.51;	author joeh;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@*** empty log message ***
+@
+text
+@<html>
+<head>
+<title>cs 262a fall 2005, basic info</title>
+<style>
+body,table {font-family:verdana;font-size:12px;color:white}
+a.menu1 {color:#FFFFFF;text-decoration:none}
+a.menu1:hover {color:#CCFF00}
+a.menu2 {color:#000033;text-decoration:none}
+a.menu2:hover {color:#CCFF00};
+a.menu3 {color:white;text-decoration:none}
+a.menu3:hover {color:#CCFF00}
+a {color:#333366}
+a:hover {color:#8888AA}
+</style>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<script language="JavaScript">
+<!--
+function MM_reloadPage(init) {  //reloads the window if Nav4 resized
+  if (init==true) with (navigator) {if ((appName=="Netscape")&&(parseInt(appVersion)==4)) {
+    document.MM_pgW=innerWidth; document.MM_pgH=innerHeight; onresize=MM_reloadPage; }}
+  else if (innerWidth!=document.MM_pgW || innerHeight!=document.MM_pgH) location.reload();
+}
+MM_reloadPage(true);
+// -->
+</script>
+</head>
+
+<body bgcolor="#000033" text="#FFFFFF">
+<base onmouseover="window.status='';return true">
+<table width="770" border="0" cellspacing="0" cellpadding="0" align="center">
+  <tr bgcolor="#333366" valign="bottom"> 
+    <td bgcolor="#111144" height="29" 
+    colspan="2"><img src="http://db.cs.berkeley.edu/jmh/img/ucbseal.gif" 
+    width=90></td>
+    <td height="29" 
+    colspan="1"><a href="index.html"><img src="images/title-bc.png"></a></td>
+  </tr>
+  <tr> 
+    <td width=100 valign="bottom" height="23" style="font-weight:bold"
+    bgcolor="#AAAA00">&nbsp;&nbsp;<img src="images/nav.png" width=90 ></td>
+    <td colspan="2" width="393" valign="bottom" style="font-weight:bold" bgcolor="#FFFF00">&nbsp;&nbsp;<img src="images/basics.png"> 
+    </td>
+<!--    <td width=100 valign="bottom" style="font-weight:bold" --
+  --    bgcolor="#666699" --
+  --    bgcolor="gray">&nbsp;&nbsp;<img src="images/links.jpg" --
+  --    width="128" height="16"></td> -->
+  </tr>
+  <tr> 
+    <td width=100 valign="top" height="103" style="font-weight:bold" bgcolor="gray"> 
+      <table width="100%" border="0" cellspacing="0" cellpadding="10">
+        <tr> 
+          <td valign="top">
+
+
+
+            <img src="images/arrow.gif" width="5" height="5">&nbsp;<font size="1"><a href="index.html" class="menu2">Home</a></font><br>
+            <img src="images/arrow.gif" width="5" height="5">&nbsp;<font size="1"><a href="basics.html" class="menu2">Basic Info</a></font><br>
+            <img src="images/arrow.gif" width="5" height="5">&nbsp;<font size="1"><a href="notes.html" class="menu2">Lecture Notes</a></font><br>
+            <img src="images/arrow.gif" width="5" height="5">&nbsp;<font size="1"><a href="syllabus.html" class="menu2">Syllabus</a></font><br>
+            <img src="images/arrow.gif" width="5" height="5">&nbsp;<font size="1"><a href="http://www.seedwiki.com/wiki/berkeley_cs262a_fall_2005/berkeley_cs262a_fall_2005.cfm" class="menu2">Wiki</a></font><br>
+            
+
+
+
+
+          </td>
+        </tr>
+      </table>
+    </td>
+    <td width="393"colspan="2" valign="top" style="font-weight:bold" bgcolor="#FFFFFF" rowspan="2"> 
+      <table width="100%" border="0" cellspacing="0" cellpadding="10">
+        <tr> 
+          <td style="font-family:verdana;font-size:12px;color:#000033">
+
+<b>Instructors:</b>
+<table  style="font-family:verdana;font-size:12px;color:#000033">
+<tr>
+<td width=300>
+  <b><a href="http://db.cs.berkeley.edu/jmh/">Joe Hellerstein</a></b><br>
+  <i>Office Hours:</i>&nbsp; Th/Fr @@2:30 <br>in 685 Soda, or by
+appointment.</br>
+</td>
+<td width=300>
+  <b><a href="http://berkeley.intel-research.net/troscoe/">Timothy Roscoe</a></b><br>
+  <i>Office Hours:</i> Wed 11-12, Th 10-11<br>at <a href="http://www.intel-research.net/berkeley/index.asp">Intel Berkeley</a> or by appt.
+</td>
+</tr>
+</table>
+
+<br>
+<b>Textbook:</b>
+<a href="http://redbook.cs.berkeley.edu/"><i>Readings in Database
+	Systems</i></a> <font color="red"><b>4th Edition</b></font> edited
+by Hellerstein and Stonebraker.
+<br>
+<br>
+An additional suggested text is Gray and Reuter's <a
+ href="http://www.mkp.com/books_catalog/1-55860-190-2.asp"><i>
+Transaction Processing: Concepts and Techniques</i></a>
+</p>
+<b>Prerequisites: </b>The basic prerequisite is to pass the <i>entrance
+exam</i> in class.&nbsp;
+It will cover undergraduate operating systems material at the level
+of Berkeley's CS162, and will be pass/fail.&nbsp; It will not be
+difficult if you've had an undergraduate course, though you may need to
+"page
+in" the material.&nbsp; The test will have no effect on your grade; it
+is purely for admission, to ensure that everyone has a solid
+foundation, and in turn a high level of discussion. &nbsp;The test is
+on the second day of class, Thursday September 1.
+<br><br>
+<b> Exams, Papers, etc.</b>
+<br>
+The main work of this class is to read steadily and
+deeply, while working toward a group research project of publishable
+quality.&nbsp; Each student will be individually responsible for
+writing up a short summary of every paper.  An <a href="examplewriteup.txt">example summary from 
+a past year</a> (written by a distinguished alumnus) is available for reference.
+<p>There will be one midterm exam (albeit near the end), and no final
+exam. </p>
+<p>Research projects are a critical aspect of the course.&nbsp; You
+goal is
+to do some quality systems research; that is, to add to our
+understanding of how to build systems.&nbsp; Research projects must be
+written up in a term paper, and will be presented in a poster in a
+departmental mini-conference.&nbsp; Suggested project ideas will be
+provided by the instructors, but you are strongly encouraged to come up
+with your own project ideas.&nbsp; Potential projects include
+implementation or analysis of some piece of an OS, a DBMS, or an
+internet service; extending one of these systems with new
+functionality; or measurement and analysis of existing systems with the
+goal of better understanding issues in system design.
+</a>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</a></font></td>
+        </tr>
+      </table>
+    </td>
+<!--   <td width=100 valign="top" style="font-weight:bold" bgcolor="#666666" rowspan="3">
+      <table width="100%" border="0" cellspacing="0" cellpadding="10">
+        <tr> 
+          <td valign="top">
+
+
+<img src="images/arrow.gif" width="5" height="5">&nbsp;<font size="1"><a href="#" class="menu3">Link</a></font><br>
+<img src="images/arrow.gif" width="5" height="5">&nbsp;<font size="1"><a href="#" class="menu3">Link</a></font><br>
+<img src="images/arrow.gif" width="5" height="5">&nbsp;<font size="1"><a href="#" class="menu3">Link</a></font><br>
+<img src="images/arrow.gif" width="5" height="5">&nbsp;<font size="1"><a href="#" class="menu3">Link</a></font><br>
+<img src="images/arrow.gif" width="5" height="5">&nbsp;<font size="1"><a href="#" class="menu3">Link</a></font><br>
+		  		  
+
+
+       </td>
+        </tr>
+      </table>
+    </td>
+-->
+  </tr>
+<!-- <tr> 
+    <td width=100 valign="bottom" height="23" style="font-weight:bold" bgcolor="#666666">&nbsp;&nbsp;<img src="images/search.jpg" width="75" height="16"></td>
+  </tr>
+-->
+  <tr> 
+    <td width=100 valign="top" height="324" style="font-weight:bold" bgcolor="gray"> 
+      <table width="100%" border="0" cellspacing="0" cellpadding="10">
+<!--
+        <tr> 
+          <td valign="top"> 
+            <form name="form1" method="post" action="">
+              <font size="1">- what - <br>
+              <input type="text" name="what" style="font-size:11px;font-family:verdana">
+              <br>
+              - where - <br>
+              <select name="where" style="font-size:11px;font-family:verdana">
+                <option>This site</option>
+                <option>World Wide Web</option>
+              </select>
+              <br>
+              <br>
+              <input type='submit' style='font:11px Verdana, Arial, Helvetica, sans-serif; border:1 solid #666666; cursor:hand; background:#999999; color: #000000; ' value="Search" name="submit">
+              <input type='reset' style='font:11px Verdana, Arial, Helvetica, sans-serif; border:1 solid #666666; cursor:hand; background:#999999; color: #000000; ' value="Reset" name="submit2">
+              </font> 
+            </form>
+          </td>
+        </tr>
+-->
+      </table>
+    </td>
+  </tr>
+  <tr bgcolor="#333333" valign="middle"> 
+    <td width="740" height="18" colspan="3" style="font-weight:bold"> 
+      <div align="center"><b><font size="1">
+
+
+
+<!-- doo do da --!>
+
+<br>
+
+</font></b></div>
+    </td>
+  </tr>
+</table>
+<p align="center"><b><font size="1">
+
+
+<BR>
+
+</font></b></p>
+</body>
+</html>
+@
+
+
+1.3
+log
+@*** empty log message ***
+@
+text
+@d60 1
+d80 1
+a80 1
+  <i>Office Hours:</i>&nbsp; Tues/Thurs @@2:30 <br>in 685 Soda, or by
+d85 1
+a85 1
+  <i>Office Hours:</i> TBA<br>&nbsp;
+@
+
+
+1.2
+log
+@*** empty log message ***
+@
+text
+@d116 2
+a117 2
+writing up a short summary of every paper.  An example summary from 
+a past year (written by a distinguished alumnus) is <a href="examplewriteup.txt">here</a>.
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d116 2
+a117 1
+writing up a short summary of every paper.
+@

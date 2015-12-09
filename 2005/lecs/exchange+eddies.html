@@ -1,0 +1,286 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="GENERATOR" content="Mozilla/4.75 [en] (WinNT; U) [Netscape]">
+</head>
+<body>
+<b>Advanced Topics in Computer Systems</b>
+<br><b>&nbsp;Joe Hellerstein &amp; Timothy Roscoe</b>
+<h2>
+Volcano &amp; the Exchange Operator</h2>
+There are a host of techniques for parallelizing particular query
+operators (e.g. hash join, sorting, etc.), but what you really need is
+to parallelize your query <i>engine</i> in a clean, uniform way.
+<br><br>Volcano's Solution: encapsulate the parallelism in a query <i>operator</i>
+of its own, not in the QP infrastructure.
+<p>Overview: kinds of intra-query parallelism available:
+<ul>
+<li>
+pipeline</li>
+
+<li>
+partition, with two subcases:</li>
+
+<ul>
+<li>
+intra-operator parallelism (e.g. parallel hash join, or parallel sort)</li>
+
+<li>
+inter-operator parallelism -- bushy trees</li>
+</ul>
+</ul>
+We want to enable all of these -- including setup, teardown, and runtime
+logic -- in a clean encapsulated way.
+<p>The <b>exchange</b> operator: an operator you pop into any single-site
+dataflow graph as desired -- anonymous to the other operators.
+<p>Implementation:
+<ul>
+<li>
+Note: Volcano was done with processes, but today you'd use threads</li>
+
+<li>
+splits the graph into two threads.&nbsp; The lower thread has an X-OUT
+iterator at the top.&nbsp; The upper thread has an X-IN iterator at the
+botton.</li>
+
+<li>
+X-OUT is a driver for the lower iterator.&nbsp; Says next() a bunch of
+times, constructs a packet, <i>pushes</i> that packet via IPC or network
+comm onto a queue in X-IN's "port".&nbsp; X-IN responds to next() when
+it has tuples in its queue.</li>
+
+<li>
+Flow control: semaphore on the port dictates the maximum degree to which
+the producer can get ahead of the consumer.  This is akin to a
+bounded queue.</li>
+<li>Note that introducing a queue allows a push producer to work with
+ a pull consumer.  The queue allows a <i>bounded drift</i> in their
+ rates of production, beyond which one side is blocking/polling. </li>
+</ul>
+
+<p><br>Benefits of exchange:
+<ol>
+<li>
+opaquely handles setup and teardown of clones (in an SMP...for shared-nothing,
+would need to have daemons at each site, and a protocol to request clone
+spawning)</li>
+
+<li>
+at the top of a local subplan, allows pipeline parallelism: turns iterator-based,
+unithreaded "pull" into network-based, cross-thread "push".</li>
+<ul><li>Why is push beneficial?</li></li>
+
+<li>
+at the top of a local subplan, allows decoupling of children's scheduling.</li>
+
+<li>
+inside a subplan, can mix pull and push to get the best of both</li>
+</ol>
+
+<p><br>"Extensibility" features of Volcano and exchange:
+<ul>
+<li>
+operators don't interpret records, <i>support functions</i> do; goes for
+partitioning as well</li>
+</ul>
+
+There were a couple subsequent extensions to Exchange:
+<ul>
+<li>Graefe
+  has <a
+		 href="http://doi.ieeecomputersociety.org/10.1109/32.238579">another
+  paper on exchange in Transactions on Software Engineering</a> which
+  provides more gory details on startup and teardown of clones.  It's
+  not all that pretty, unfortunately.</li>
+<li>The <a href="http://now.cs.berkeley.edu/River/">River</a> project
+  at Berkeley revisited partitioned parallelism with an eye toward
+  adaptive load balancing for state-agnostic operators (each data item
+  can go into any consumer partition).</a>
+<li>FLuX
+  (<a
+	  href="http://db.cs.berkeley.edu/~mashah/sigmod-04/mashah-flux-final.pdf">Fault-tolerant</a>,
+  <a
+  href="http://db.cs.berkeley.edu/~mashah/icde-03/flux-lb.pdf">Load-Balancing</a>
+  eXchange) was an effort at Berkeley to extend Exchange to add what the
+  name says.</li>
+<li><a
+	   href="http://labs.google.com/papers/mapreduce-osdi04.pdf">Google
+	   MapReduce</a> basically applies partition parallelism to a
+	   simple dataflow pipeline, and demonstrates broad applicability
+	   in their workloads.  It also includes simple fault-tolerance
+	   and load balancing techniques -- simpler than River or Flux, yet
+	   effective enough for their workloads. A related paper
+	   on <a
+	   href="http://labs.google.com/papers/sawzall.html">Sawzall</a>
+	   proposes a "little language" for this environment, which should
+	   be contrasted with a dataflow or query language.</li>
+</ul>
+
+Food for thought:
+<ul>
+<li>
+As we'll see again, encapsulating communication/flow details is a good
+programming paradigm.  Is there a broader lesson here for asynchronous
+programming models, and particularly distributed or parallel
+programming models? Volcano was in fact supposed to be targeted at
+more general parallel programming, though they only made a few steps
+in that direction.</li>
+
+<li>
+Note that an optimizer chooses where to pop exchange ops into a plan.
+What does this suggest in concert with the above point? If we program
+right, can this kind of decision be made by an optimizer in more
+general programming tasks? Can query optimization be brought to bear
+in more generic contexts?</li>
+
+<li>
+What about eddies and exchange -- can we make the use of exchange operators
+dynamic, and dynamically control the points and degrees of parallelism?</li>
+</ul>
+
+<h2>Eddies</h2>
+Starting point: observes that a query optimizer is an adaptive system
+with a very slow feedback loop:
+<ol>
+<li>Observe environment: daily/weekly (runstats)</li>
+<li>Use observations to choose behavior: query optimization</li>
+<li>Take action: query execution</li>
+</ol>
+
+There are reasons to believe this is way too slow.  People have looked
+at more intelligent things
+(see <a
+		href="http://www.acm.org/sigs/sigmod/disc/disc01/out/websites/deb_june/hellerstein.pdf">survey
+  article</a> for more detail):
+<ul>
+<li><b>Per-query adaptivity:</b> piggyback statistics-gathering on
+  query execution.  [Chen/Roussopoulos 94].</li>
+<li><b>Runtime sampling:</b> Take samples of the database right at
+  runtime to estimate costs. (many papers starting in the late 80's)</li>
+<li><b>Runtime "competition":</b> for initial phase of a query, try
+  multiple plans, and then choose the best alternative. [Antoshenkov,
+  DEC RDB, 96].  Only used for base-table access method
+  selection.</li>
+<li><b>Inter-operator adaptivity</b>: Place a materialization operator
+  in the plan.  Re-optimize after the materialization operator
+  runs. e.g. [Kabra/DeWitt98]</b>
+<li><b>Adaptive operators:</b>  Some good work was done on making big
+  operators (e.g. hashjoin, sort) adaptive to changing memory
+  availability.  e.g. [Pang/Carey/Livny 93].  Also some work on
+  making join algorithms for interactive query systems that favor one
+  input or the other based on user feedback [Haas/Hellerstein 97]</li>
+<li><b>Adaptive partitioning:</b> River [Arpaci/etal. 99] adaptively
+  decided how to partition a dataflow a la Exchange.</li>
+</ul>
+
+Eddies were an effort to subsume a bunch of this stuff using the
+design spirit of Exchange: encapsulate the decisions in a dataflow
+operator.  An eddy allows for adaptive reordering of a subtree of
+dataflow operators on a <i>tuple by tuple basis</i> (or slower, of
+course).  Here's the idea:
+<ul>
+<li> The eddy is "wired up" so that its inputs are the inputs to the
+subtree, its output is the output of the subtree, and all the
+operators in the subtree are both inputs and outputs of the eddy.
+  Note that an eddy can service <i>all</i> the operators in a plan, or
+  it can just provide flexibility for a subset of operators.
+<li>The eddy is parameterized by a <i>partial ordering</i> on the
+operators, which tells it which operators must precede which in the
+dataflow, and which ones can be mutually reordered.</li>
+<li>If all the operators are pipelining (in the "Joe Hellerstein rule"
+  sense of producing tuples while consuming), then the eddy gets to:
+<ol>
+  <li>Observe the rates of production/consumption for operators</li>
+  <li>Choose the order of operators that each tuple visits.</li>
+</ol>
+</li>
+<li>In essence, the choice of the dataflow graph edges has been replaced by
+  a "routing policy".
+<li>The eddy operator can therefore serve as a single encapsulated
+place for control logic (in the sense of control theory).</li>
+<li>To ensure that each tuple visits each operator at most once and in
+  an order consistent with the partial order given, a "steering
+  vector" of ready/done bits is attached to each tuple to guide
+</ul>
+
+Note a vague similarity to INGRES' optimization scheme, which also
+could change join orders "per tuple" in some sense.
+
+At the architectural level, that's all fine and dandy.  But many
+questions remain.
+
+Some basic ones:
+<ul>
+<li>Many people with competing schemes accused eddies of overkill and
+  efficiency: isn't the overhead of all this tuple massaging too high?
+  You can't really want or need to adapt on a per-tuple basis?  This
+  was addressed with
+  a <a href="http://portal.acm.org/citation.cfm?id=974129">simple
+  batching scheme described in a short paper</a> with a performance
+  study in Postgres.</li>
+<li>What is an optimal routing policy?  How do you even define the
+  problem?  This is tricky.  It's useful to start with the simpler
+  problem of eddies over unary filters -- i.e. selections or key-based
+  index joins (e.g. web lookups).  Even here the problem is tricky,
+  and depends how you define it.  For a stable data distribution, an
+  <a href="http://dbpubs.stanford.edu/pub/2003-69">approximation algorithm was developed</a>
+  There's a natural though imperfect analogy to "n-arm bandit"
+  problems.  There are also some complexity results and worst-case
+  bounds for different models of correlation among predicates.  An
+  interesting heuristic appeared in VLDB this year
+  [<a href="http://www.cs.wisc.edu/~pedro/publications.htm">Babu
+  2005</a>]</li>
+</ul>
+More complicated questions revolving around joins remain:
+<ul>
+<li>Is it always OK to mess with tuple routing among joins, or can
+  that give you wrong answers?  <i>Moments of symmetry</i> was an
+  intuitive, informal handle on that.</li>
+<li>Join output requires feeds on both inputs.  The initial delay
+  problem in the paper.</li>
+<li>Can we enable the join <i>algorithm</i> to change, or are we
+  limited to the join ordering alone?</li>
+<li>Joins carry a "burden of history": once potentially joinable
+  tuples have been sent to separate join operators, there is no way to
+  create <i>any</i> output product using those tuples with a join
+  order that combines them first.  E.g. the initial delay problem is
+  like this: S tuples were sent to the join of R and S, T tuples were
+  sent to the join of S and T. If S tuples could be easily filtered by
+  T and are expensive to join with R, once the R's come in it's too
+  late to change your mind.</li>
+</ul>
+
+Many of these problems were subsequently addressed by choosing a
+different granularity of dataflow operator.  Instead of using eddies
+and joins, you expose the "state modules" ("STeMs") (hashtables,
+b-trees) from the join directly to the eddy -- in essence you expose
+the join algorithm's internals to the eddy.  This idea led to:
+<ul>
+<li>competition and hybridization of multiple join algorithms (hash
+  join and index join) at runtime [<a href="http://db.cs.berkeley.edu/papers/icde03-stems.pdf">Raman, 2003</a>]</li>
+<li>user-controllable partial results from
+  queries[<a
+			 href="http://db.cs.berkeley.edu/papers/sigmod02-partial.pdf">Raman,
+  2002</a>]</li> 
+<li>solutions to the initial delay and "burden of history" problems
+  (via STAIRS)
+  [<a
+  href="http://db.cs.berkeley.edu/papers/vldb04-stairs.pdf">Deshpande, 2004</a>]</li>
+</ul>
+
+The end result of this was that we tore apart traditional relational
+query processing and optimization and reexamined it.  However, we
+certainly did not put it back together (yet)!  The set of new
+variables exposed introduces a bunch of complexity, and naturally
+reopens buried chestnuts like dealing with dependencies in data and
+predicates.    <i>Much remains to be done here!</i>  The question is
+relevance: one can come up with many scenarios where adaptivity helps
+a lot, but are any of them enough to rearchitect a DBMS?
+<br><br>
+My take: maybe not in the traditional DBMS market.  Maybe in the brave
+new world of software dataflow for other tasks, e.g. network routing!
+
+
+</body>
+</html>

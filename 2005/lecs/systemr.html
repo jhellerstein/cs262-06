@@ -1,0 +1,553 @@
+<!DOCTYPE html PUBLIC "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+  <meta http-equiv="Content-Type"
+ content="text/html; charset=iso-8859-1">
+  <meta name="Author" content="Joseph M. Hellerstein">
+  <meta name="GENERATOR"
+ content="Mozilla/4.73 [en] (WinNT; U) [Netscape]">
+  <title>CS262a: System R &amp; DBMS Overview</title>
+</head>
+<body>
+&nbsp;
+<table border="0" cols="2" width="100%">
+  <tbody>
+    <tr>
+      <td><b>Advanced Topics in Computer Systems</b></td>
+      <td>
+      <div align="right"><b>Lecture 3<br>
+      </b></div>
+      </td>
+    </tr>
+    <tr>
+      <td><b>Joe Hellerstein &amp; Timothy Roscoe<br>
+      </b></td>
+      <td><br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<center>
+<h2> System R &amp; DBMS Overview</h2>
+</center>
+<h3> DBMS History</h3>
+<ul>
+  <li> late 60's: network (CODASYL) &amp; hierarchical (IMS)
+DBMS.&nbsp;
+Charles Bachman: father of CODASYL predecessor IDS (at GE in early
+1960's).&nbsp; Turing award #8 (1973, between Dijkstra and Knuth.)</li>
+  <ul>
+    <li>IMS Example: <span style="font-style: italic;">Suppliers</span>
+record type and <span style="font-style: italic;">Parts</span> record
+type.&nbsp; One is parent, one is child.&nbsp; Each instance identified
+by a Hierarchical Sequence Key (HSK).&nbsp; Problems include redundancy
+and requirement of having a parent (deletion anomalies.)</li>
+    <li> Low-level ``record-at-a-time'' DML, i.e. physical data
+structures
+reflected in DML (no data independence).&nbsp; <br>
+      <br>
+    </li>
+  </ul>
+  <li>1970: Codd's paper. The most influential paper in DB research.
+Set-at-a-time DML. Data independence. Allows for schema and physical
+storage structures to change under the covers. Papadimitriou: "as clear
+a paradigm shift as we can hope to find in computer science").&nbsp;
+Edgar F. Codd: Turing
+award #18 (1981, between Hoare and Cook).</li>
+  <ul>
+    <li> Focus on separation into 3 levels: physical storage, logical
+schema,
+and multiple views.</li>
+    <li> Results in two kinds of independence: physical data
+independence,
+and logical data independence</li>
+    <ul>
+      <li> Physical allows you change the storage layout without
+affecting
+apps.&nbsp; "DBMS makes right", hence totally invisible to everyone
+except in terms of performance.<br>
+      </li>
+      <li> Logical encapsulates apps from changes in logical
+schema.&nbsp;
+"DBA makes right" (except in simple cases, when DBMS makes
+right).&nbsp; Additional flaws with this (can't update views in
+general).&nbsp; Hence visible to everyone.<br>
+      </li>
+      <li> Data independence CRITICAL for database evolution -- and
+note that databases live
+and evolve for a LONG time!<br>
+        <br>
+      </li>
+    </ul>
+  </ul>
+  <li>Generalizing the lesson of data independence:</li>
+  <ul>
+    <li>Need data indendence when <span style="font-style: italic;">d</span>app/<span
+ style="font-style: italic;">dt &lt;&lt; d</span>environment/<span
+ style="font-style: italic;">dt, </span>where environment is things
+like physical storage, machine speed, machine workload, etc<span
+ style="font-style: italic;">.</span></li>
+    <li>Other scenarios where this holds?</li>
+    <li>This is an early, powerful instance of two themes: levels of
+indirection (this is a <span style="font-style: italic;">biggie</span>)
+and adaptivity (done in DBMS on a coarse grain til recent research.)<br>
+      <br>
+      <br>
+    </li>
+  </ul>
+  <li>mid 70's: wholesale adoption of Codd's vision in 2 full-function
+(sort of) prototypes. Ancestors of essentially all today's commercial
+systems</li>
+  <li> <a href="http://db.cs.berkeley.edu/ingres/">Ingres</a>
+: UCB 1974-77</li>
+  <ul>
+    <li> a ``pickup team'', including Stonebraker &amp; Wong. early and
+pioneering. begat Ingres Corp (CA), CA-Universe, Britton-Lee, Sybase,
+MS SQL Server, Wang's
+PACE, Tandem Non-Stop SQL.</li>
+  </ul>
+  <li> <a href="http://www.mcjones.org/System_R">System R</a>
+: IBM San Jose (now Almaden)</li>
+  <ul>
+    <li> 15 PhDs. begat IBM's SQL/DS &amp; DB2, Oracle, HP's Allbase,
+Tandem
+Non-Stop SQL. System R arguably got more stuff ``right'', though there
+was
+lots of information passing between both groups</li>
+    <li> Jim Gray: Turing Award #22&nbsp; (1998, between Englebart and
+Brooks)</li>
+    <li> Lots of Berkeley folks on the System R team, including Gray
+(1st
+CS PhD @ Berkeley), Bruce Lindsay, Irv Traiger, Paul McJones, Mike
+Blasgen,
+Mario Schkolnick, Bob Selinger , Bob Yost.&nbsp; See</li>
+    <br>
+    <a
+ href="http://www.mcjones.org/System_R/SQL_Reunion_95/sqlr95-Prehisto.html#Index71">http://www.mcjones.org/System_R/SQL_Reunion_95/sqlr95-Prehisto.html#Index71.</a>
+  </ul>
+  <li> Both were viable starting points, proved practicality of
+relational
+approach. Direct example of theory&nbsp; -&gt; practice!</li>
+  <ul>
+    <li> ACM Software Systems award #6 shared by both</li>
+    <li>Stated goal of both systems was to take Codd's theory and turn
+it into a workable system as fast as CODASYL but much easier to use and
+maintain<br>
+    </li>
+    <li> Interestingly, Stonebraker received ACM SIGMOD Innovations
+Award
+#1 (1991), Gray #2 (1992), whereas Gray got the Turing first.</li>
+  </ul>
+  <li> early 80's: commercialization of relational systems</li>
+  <ul>
+    <li> Ellison's Oracle beats IBM to market by reading white papers.</li>
+    <li> IBM releases multiple RDBMSs, settles down to DB2.&nbsp; Gray
+(System
+R), Jerry Held (Ingres) and others join Tandem (Non-Stop SQL), Kapali
+Eswaran starts EsVal, which begets HP Allbase and Cullinet</li>
+    <li> Relational Technology Inc (Ingres Corp), Britton-Lee/Sybase,
+Wang
+PACE grow out of Ingres group</li>
+    <li> CA releases CA-Universe, a commercialization of Ingres</li>
+    <li> Informix started by Cal alum Roger Sippl (no pedigree to
+research).</li>
+    <li> Teradata started by some Cal Tech alums, based on proprietary
+networking technology (no pedigree to software research, though see
+parallel DBMS discussion
+next semester!)</li>
+  </ul>
+  <li> mid 80's: SQL becomes "intergalactic standard''.</li>
+  <ul>
+    <li> DB2 becomes IBM's flagship product.</li>
+    <li> IMS "sunseted''</li>
+  </ul>
+  <li> today: network &amp; hierarchical are legacy systems (though
+commonly
+in use!)</li>
+  <ul>
+    <li> relational commoditized -- Microsoft, Oracle and IBM fighting
+over
+much of the market. &nbsp;IBM bought Informix, to become solid
+competitor for #1 with Oracle.  MS a strong #3. NCR
+Teradata is distant #4, and a few others (e.g. Sybase) vying to
+	  survive on the fringes.  OpenSource coming of age, with MySQL
+	  doing well at the low end, and PostgreSQL maturing at the more
+	  functional end.  BerkeleyDB is an embedded transactional store
+	  that is widely used as well</li>
+    <ul>
+      <li> Computer Associates bought Ingres and largely killed it</li>
+      <li> Oracle bought DEC Rdb and largely killed it</li>
+      <li> Informix bought Illustra (commercial Postgres), incorporated
+it.</li>
+      <li>IBM bought Informix, will mostly sunset
+it.<br>
+      </li>
+      <li> Microsoft bootstrapped by buying code to Sybase SQL Server
+(hence
+Ingres pedigree)</li>
+    </ul>
+    <li> "object-relational" is mainstream (courtesy Postgres)<br>
+    </li>
+    <ul>
+      <li>extension of relational we may talk about as time permits</li>
+      <ul>
+        <li>think relational + extensible types and downloadable code +
+rule
+systems + non-normalized data</li>
+      </ul>
+      <li> Informix, IBM, Oracle, Sybase all claim to sell it
+today.&nbsp;
+Microsoft in "the next version".</li>
+    </ul>
+    <li>XML has pervaded the relational products as both an interface
+and a data type, further complicating the "purity" of Codd's vision.<br>
+    </li>
+    <ul>
+      <br>
+    </ul>
+  </ul>
+</ul>
+<h3> Relational System Architecture</h3>
+Databases are BIG pieces of software. Typically somewhat hard to
+modularize. Lots of system design decisions at the macro and micro
+scale. We will focus mostly on micro decisions -- and hence ideas
+reusable outside DBMSs -- in
+subsequent lectures. Here we focus on macro design.
+<p>Disk management choices: </p>
+<ul>
+  <ul>
+    <li> file per relation</li>
+    <li> big file in file system</li>
+    <li> raw device</li>
+  </ul>
+</ul>
+Process Model:
+<ul>
+  <ul>
+    <li> process per user</li>
+    <li> server</li>
+    <li> multi-server</li>
+  </ul>
+</ul>
+Basic modules:
+<ul>
+  <ul>
+    <li> parser</li>
+    <li> query rewrite</li>
+    <li> optimizer</li>
+    <li> query executor</li>
+    <li> access methods</li>
+    <li> buffer manager</li>
+    <li> lock manager</li>
+    <li> log/recovery manager</li>
+  </ul>
+</ul>
+Query Rewriter
+<ul>
+  <ul>
+    <li> Flattens views (why?)</li>
+    <li> may change query semantics (constraints, protection, etc.)</li>
+  </ul>
+</ul>
+Optimizer
+<ul>
+  <ul>
+    <li> large space of equivalent relational plans</li>
+    <li> pick one that's going to be "optimal" (?)</li>
+    <li> produces either an interpretable plan tree, or compiled code</li>
+  </ul>
+</ul>
+Executor
+<ul>
+  <ul>
+    <li> modules to perform relation operations like joins, sorts,
+aggregations, etc.</li>
+    <li> calls Access Methods for operations on base and temporary
+relations</li>
+  </ul>
+</ul>
+Access Methods
+<ul>
+  <ul>
+    <li> uniform relational interface (open, get next), a la INGRES
+AMI,
+System R's RSS</li>
+    <li> multiple implementations: heap, B-tree, extensible hashing</li>
+  </ul>
+</ul>
+Buffer Manager
+<ul>
+  <ul>
+    <li> Intelligent user-level disk cache</li>
+    <li> must interact with transaction manager &amp; lock manager</li>
+    <li> Virtual memory does not cut it!&nbsp; (we'll discuss this at
+length)</li>
+  </ul>
+</ul>
+Lock Manager
+<ul>
+  <ul>
+    <li> must efficiently support lock table</li>
+    <li> System R architecture influential:</li>
+    <ul>
+      <li> physical and logical locks treated uniformly</li>
+      <li> multiple granularity of locks</li>
+      <li> set intent locks at high levels</li>
+      <li> we will study this in more detail later (Gray)</li>
+    </ul>
+    <li> deadlock handling: detection</li>
+  </ul>
+</ul>
+Log/Recovery Manager
+<ul>
+  <ul>
+    <li> "before/after" log on values</li>
+    <li> checkpoint/restore facility for quick recovery</li>
+    <li> Redo/Undo on restore</li>
+    <li> Support soft crashes off disk, hard crashes off tape.</li>
+    <li> System R?s shadowing is too slow. Use Write-Ahead Logging!
+(WAL)
+More on this to come.</li>
+    <li> Hard to get right!</li>
+  </ul>
+</ul>
+<h3>Notes on System R</h3>
+See the <a href="http://www.mcjones.org/System_R/SQL_Reunion_95">System
+R
+reunion notes</a> for fun background and gossip.<br>
+<br>
+Some "systems chestnuts" seen in this paper:<br>
+<ul>
+  <ul>
+    <li>Expect to throw out the 1st version of the system</li>
+    <li>Expose internals via standard external interfaces whenever
+possible (e.g. catalogs as tables, the /proc filesystem, etc.)</li>
+    <li>Optimize the fast path</li>
+    <li>Interpretation vs. compilation vs. intermediate "opcode"
+representations</li>
+    <li>Component failure as a common case to consider</li>
+    <li>Problems arising from interactions between replicated
+functionality (in this case, scheduling)</li>
+  </ul>
+</ul>
+Some important points of discussion
+<ul>
+  <li>Flexibility of storage mechanisms: domains/inversions vs.
+heap-files/indexes.&nbsp; Use of TID-lists common in modern DBMS.&nbsp;
+Why be doctrinaire?&nbsp; What about Data Independence?&nbsp; One
+answer: you have to get transactions right each time.</li>
+  <li>System R was often CPU bound (though that's a coarse-grained
+assertion -- really means NOT disk-bound).&nbsp; This is common today
+in well-provisioned DBMSs as well.&nbsp; Why?</li>
+  <li>DBMSs are not monolithic designs, really.&nbsp; The RSS stuff
+does intertwine locking and logging into disk access, indexing and
+buffer management.&nbsp; But RDS/RSS boundary is clean, and RDS is
+decomposable.</li>
+  <li>Access control via views: a deep application of data
+independence?!</li>
+  <li>Transactional contribution of System R (both conceptual and
+implementation) as important as relational model, and in fact should be
+decoupled from relational model.</li>
+</ul>
+The "Convoy Problem":<br>
+<ul>
+  <ul>
+    <li>A classic cross-level scheduling interaction.&nbsp; We will see
+this again!</li>
+    <li>Poorly explained in the paper.<br>
+      <br>
+I have always found this presentation confusing. A number of issues are
+going on. The first two have to do with interactions between OS and DB
+scheduling: </li>
+    <ol type="a">
+      <li> the OS can preempt a database "process" even when that
+process is holding a high-traffic DB lock</li>
+      <li> DB processes sitting in DB lock queues use up their OS
+scheduling quanta while waiting (this is poorly explained in the text).
+Once they use up all their quanta, they get removed from the
+"multiprogramming set" and go to "sleep" -- and an expensive OS
+dispatch is required to run them again.&nbsp;</li>
+    </ol>
+The last issue is that
+    <ol start="3" type="a">
+      <li> the DBMS uses a FCFS wait queue for the lock. </li>
+    </ol>
+For a high-traffic DB lock, DB processes will request it on average
+every T timesteps. If the OS preempts a DB process holding that
+high-traffic DB lock, the queue behind the lock grows to include
+almost all DB processes. Moreover, the queue is too long to be drained
+in T timesteps, so it's "stable" -- every DB process queues back up
+before the queue drains, and they burn up their quanta pointlessly
+waiting in line, after which they are sent to sleep. Hence each DB
+process is awake for only one grant of the lock and the subsequent T
+timesteps of useful work, after which they queue for the lock again,
+waste their quanta in the queue, and are put back to sleep. The result
+is that the useful work per OS waking period is about T timesteps,
+which is shorter than the overhead of scheduling -- hence the system
+is thrashing. <li>Note that the solution attacks the only issue in the
+previous
+comment that can be handled without interating with the OS: (c) the
+FCFS DB lock queue. The explanation here is confusing, I think. The
+point is to always allow any one of the DB processes currently in the
+"multiprogramming set" to immediately get the lock without burning a
+quantum waiting on the lock -- hence no quanta are wasted on waiting,
+so each process spends almost all of its alloted quanta on "real
+work". Note that the proposed policy achieves this without needing to
+know which processes are in the OS' multiprogramming set. </li>
+  </ul>
+</ul>
+<p>System R and INGRES are the prototypes that all current systems are
+based on.&nbsp; Basic architecture is the same, and many of the ideas
+remain in today's systems: </p>
+<ul>
+  <ul>
+    <li> optimizer remains, largely unchanged</li>
+    <li> RSS/RDS divide remains in many systems</li>
+    <li> SQL, cursors, duplicates, NULLs, etc.</li>
+    <ul>
+      <li> the pros and cons of duplicates. Alternatives?</li>
+      <li> pros and cons of NULLs. Alternatives?</li>
+      <li> grouping and aggregation</li>
+    </ul>
+    <li> updatable single-table views</li>
+    <li> begin/end xact at user level</li>
+    <li> savepoints and restore</li>
+    <li> catalogs as relations</li>
+    <li> flexible security (GRANT/REVOKE)</li>
+    <li> integrity constraints</li>
+    <li> triggers (!!)</li>
+    <li> clustering</li>
+    <li> compiled queries</li>
+    <li> B-trees</li>
+    <li> Nest-loop &amp; sort-merge join, all joins 2-way</li>
+    <li> dual logs to support log failure</li>
+  </ul>
+</ul>
+Stuff they got wrong:
+<ul>
+  <ul>
+    <li> shadow paging</li>
+    <li> predicate locking</li>
+    <li> SQL language</li>
+    <ul>
+      <li> duplicate semantics</li>
+      <li> subqueries vs. joins</li>
+      <li> outer join</li>
+    </ul>
+    <li> rejected hashing</li>
+  </ul>
+</ul>
+<br>
+<h3> Database View of Applications</h3>
+Big, complex record-keeping applications like SAP and PeopleSoft, which
+run
+<i>over</i> a DBMS.&nbsp; "Enterprise applications" to keep businesses
+humming.
+A smattering:
+<ul>
+  <li> ERP: Enterprise Resource Planning (SAP, Baan, PeopleSoft,
+Oracle,
+IBM, etc.)</li>
+  <li> CRM: Customer Relationship Management (E.phiphany, Siebel,
+Oracle, IBM, etc.)</li>
+  <li> SCM: Supply Chain Management (Trilogy, i2, Oracle, IBM, etc.)</li>
+  <li> Human Resources, Direct Marketing, Call Center, Sales Force
+Automation, Help Desk, Catalog Management, etc.</li>
+  <li> Many e-business versions of order-entry/procurement and the
+above
+(i.e. web serving packages for this)</li>
+  <li> Integrated B2B versions of all this rolling as fast as possible</li>
+</ul>
+A main job of DBMS is to make these kinds of apps easy to write <br>
+&nbsp;
+<h3> OS and DBMS: Philosophical Similarities &amp; Differences</h3>
+<ul>
+  <li> UNIX paper: "The most important job of UNIX is to provide a file
+system".</li>
+  <ul>
+    <li> UNIX and System R are both "information management" systems!</li>
+    <li> both also provide programming APIs for code</li>
+  </ul>
+  <li> Difference in focus: Bottom-Up (elegance of system) vs. Top-Down
+(elegance of semantics)</li>
+  <ul>
+    <li> main goal of UNIX was to provide a small <i>elegant </i>set
+of mechanisms, and have programmers (i.e. C programmers) build on top
+of it.&nbsp; As an
+example, they are proud that "No large 'access method' routines are
+required
+to insulate the programmer from system calls".&nbsp; After all, OS
+viewed
+its role as <i>presenting hardware to computer programmers.</i></li>
+    <li> main goal of System R and Ingres was to provide a complete
+system
+that insulated programmers (i.e. SQL + scripting) from the system,
+while
+guaranteeing clearly defined <i>semantics </i>of data and
+queries.&nbsp;
+After all, DBMS views its role as <i>managing data for application
+programmers.</i></li>
+    <li> Affects where the complexity goes!</li>
+  </ul>
+  <ul>
+    <ul>
+      <li> to the system, or the end-programmer?</li>
+      <li> question: which is better?&nbsp; in what environments?</li>
+      <li> follow-on question: are internet systems more like
+enterprise
+apps (traditionally built on DBMSs) or scientific/end-user apps
+(traditionally
+built over OSes and files)?&nbsp; Why?</li>
+    </ul>
+  </ul>
+  <li> Achilles' heel of RDBMSs: a closed box</li>
+  <ul>
+    <li> Cannot leverage technology without going through the full SQL
+stack</li>
+    <li> One solution: make the system extensible, convince the world
+to
+download code into the DBMS</li>
+    <li> Another solution: componentize the system (hard? RSS is hard
+to bust up, due to transaction semantics)</li>
+  </ul>
+  <li> Achilles' heel of OSes: hard to decide on the "right" level of
+abstraction</li>
+  <ul>
+    <li> As we'll read, many UNIX abstractions (e.g. virtual memory)
+hide
+*too* much detail, messing up semantics.&nbsp; On the other hand, too
+low
+a level can cause too much programmer burden, and messes up the
+elegance
+of the system</li>
+    <li> One solution: make the system extensible, convince the fancy
+apps
+to download code into the OS</li>
+    <li> Another solution: componentize the system (hard, due to
+protection
+issues)</li>
+  </ul>
+  <li> Traditionally separate communities, despite subsequently clear
+need
+to integrate</li>
+  <ul>
+    <li> UNIX paper: "We take the view that locks are neither necessary
+nor
+sufficient, in our environment, to prevent interference between users
+of
+the same file. They are unnecessary because we are not faced with
+large,
+single-file data bases maintained by independent processes."</li>
+    <li> System R: "has illustrated the feasibility of compiling a very
+high-level data sublanguage, SQL, into machine-level code".</li>
+  </ul>
+</ul>
+So, a main goal of this class is to work from both of these directions,
+cull
+the lessons from each, and ask how to use these lessons today both
+within
+and OUTSIDE the context of these historically separate systems.<br>
+<br>
+&nbsp;<br>
+</body>
+</html>

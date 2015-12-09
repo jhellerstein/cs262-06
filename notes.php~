@@ -1,0 +1,12 @@
+<html>
+<head>
+<title>cs 262a fall 2005, lecture notes</title>
+<link rel="stylesheet" type="text/css" href="css/style.css" />
+</head>
+<body>
+
+<?php include "header.inc"; ?>
+<a href="2005/notes.php"><b>Last Year's Notes</b></a>
+<?php include "footer.inc"; ?>
+</body>
+</html>

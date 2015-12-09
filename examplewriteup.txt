@@ -1,0 +1,27 @@
+LRVM (Satyanarayanan, et al.)
+
+Good points:
+
+1) Providing an abstraction of a greatly needed behavior
+(transactions) makes system code implementation much easier: this stuff is
+useful.
+
+2) Returns to UNIX mentality of small and simple building blocks.
+
+3) Performance analysis (Rmem/Pmem) very applicable to stated domain (fs
+metadata).
+
+
+Bad points:
+
+1) It would have been nice if they had explicitly stated that set-range
+can be called multiple times within a transaction; they only comment on it
+in 5.2 when discussing optimizations (for overlapping region
+specification).
+
+2) It's unclear why the throughputs are almost equivalent for sequential
+access even though their CPU utilization is much different. This seems to
+contradict their scalability concern, as it would seem both systems are IO
+bound as opposed to to CPU bound; given the rate of CPU improvement, IO
+would seem to be the greater concern. Of course, it's still good that the
+very simple RVM performs better.

@@ -1,0 +1,118 @@
+<html>
+<head>
+<title>cs 262a fall 2005, lecture notes</title>
+<link rel="stylesheet" type="text/css" href="css/style.css" />
+</head>
+<body>
+
+<?php include "header.inc"; ?>
+
+<table width="100%" border="0" cellspacing="0" cellpadding="2" style="font-family:verdana;font-size:12px;color:#000033">
+     <tr>
+		 <td>
+              <b><span style=
+              "font-family: Arial;">Class/Date</span></b>
+          </td>
+          <td>
+              <b><span style="font-family: Arial;">Topic</span></b>
+          </td>
+          <td>
+              <b><span style="font-family: Arial;">Lecture
+              Notes</span></b>
+          </td>
+	</tr>
+	<tr>
+		<td>8/30</td> <td>Intro and UNIX</td>
+        <td>[<a href="lecs/unix.pdf">PDF on UNIX</a>]</td>
+	</tr>
+	<tr>
+		<td>9/6</td> <td>System R and RDBMS architecture</td>
+        <td>[<a href="lecs/systemr.html">lecture notes</a>] and [<a href="SystemR-comments.pdf">annotated PDF of System R paper</a>]</td>
+	</tr>
+	<tr>
+		<td>9/8</td> <td>Introduction to Transactions</td>
+        <td>[<a href="lecs/transactions.html">lecture notes</a>]</td> 
+	</tr>
+	<tr>
+		<td>9/13</td> <td>Mach VM</td>
+        <td>[<a href="lecs/mach.pdf">lecture notes</a>]</td> 
+	</tr>
+	<tr>
+		<td>9/15</td> <td>User-Level and Recoverable VM</td>
+        <td>[<a href="lecs/rvmuvm.pdf">lecture notes</a>]</td> 
+	</tr>
+	<tr>
+		<td>9/20</td> <td>Multics VM</td>
+        <td>[<a href="lecs/multics.pdf">lecture notes</a>]</td> 
+	</tr>
+	<tr>
+		<td>9/22</td> <td>V++ ACPM and the 5-Minute Rule</td>
+        <td>[<a href="lecs/ACPM-BufMgr.htm">lecture notes</a>] [<a href="lecs/hc92-comments.pdf">annotated PDF of ACPM paper</a>] [<a href="lecs/5minrule-comments.pdf">annotated PDF of the 5 Minute Rule</a>]</td> 
+	</tr>
+	<tr>
+		<td>9/27</td> <td>Xen and Virtualization</td>
+        <td><i>Guest lecture, Steve Hand</i></td> 
+	</tr>
+	<tr>
+		<td>9/29</td> <td>Intro to Recovery + the POSTGRES storage system</td>
+        <td>[<a href="lecs/recovery.html">Recovery intro</a>] [<a
+     href="lecs/pgstorage.html">POSTGRES storage</a>]</td> 
+	</tr>
+	<tr>
+		<td>10/4</td> <td>FFS & LFS</td>
+        <td>[<a href="lecs/ffslfs.pdf">lecture notes</a>]</td>
+	</tr>
+	<tr>
+		<td>10/6</td> <td>ARIES</td>
+        <td>[<a href="lecs/aries-6up.pdf">ARIES overview</a>] </td> 
+	</tr>
+	<tr>
+		<td>10/11</td> <td>Project advice</td>
+        <td>[<a href="lecs/projects.pdf">notes</a>]</td>
+	</tr>
+	<tr>
+		<td>10/13</td> <td>AutoRAID</td>
+        <td>[<a href="lecs/autoraid.pdf">lecture notes</a>]</td> 
+	</tr>
+	<tr>
+		<td>10/18</td> <td>Mesa monitors</td>
+        <td>[<a href="lecs/mesa.pdf">lecture notes</a>]</td> 
+	</tr>
+	<tr>
+		<td>10/20</td> <td>Hierarchical Locking and Consistency</td>
+        <td>[<a href="lecs/consistency.html">lecture notes</a>]</td>
+	</tr>
+	<tr>
+		<td>10/25</td><td>Optimistic Concurrency and Performance wrt Locking</td>
+		<td><i>Guest lecture, Mike Franklin</i></td>
+	<tr>
+		<td>10/27</td> <td>Query Processing</td>
+        <td>[<a href="lecs/queryproc.html">lecture notes</a>]</td>
+	</tr>
+	<tr>
+		<td>11/1</td> <td>Query Optimization: Selinger and Volcano</td>
+        <td>[<a href="lecs/queryopt.html">lecture notes</a>]</td>
+	</tr>
+	<tr>
+		<td>11/3</td> <td>Dataflow encapsulations: Exchange and Eddies</td>
+        <td>[<a href="lecs/exchange+eddies.html">lecture notes</a>]</td>
+	</tr>
+	<tr>
+		<td>11/10</td> <td>Events and Threads</td>
+		<td>[<a href="lecs/eventsthreads.pdf">lecture notes</a>]</td>
+	</tr>
+	<tr>
+		<td>11/15</td> <td>Lottery and Stride Scheduling</td>
+		<td><i>Guest lecture, Eric Brewer</i></td>
+	<tr>
+		<td>11/17</td> <td>Scheduler Activations and First-Class User Threads</td>
+		<td>[<a href="lecs/24-activations.pdf">lecture notes</a>]</td>
+    </tr>
+	<tr>
+		<td>11/22</td> <td>Congestion avoidance and adversaries</td>
+		<td>[<a href="lecs/25-congestion.pdf">lecture notes</a>]</td>
+	</tr>
+</table>
+<?php include "footer.inc"; ?>
+</body>
+</html>

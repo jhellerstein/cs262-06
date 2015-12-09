@@ -1,0 +1,41 @@
+<html>
+<head>
+<title>cs 262a fall 2005, lecture notes</title>
+<link rel="stylesheet" type="text/css" href="css/style.css" />
+</head>
+<body>
+
+<?php include "header.inc"; ?>
+<a href="2005/notes.php"><b>Last Year's Notes</b></a>
+
+<table width="100%" border="0" cellspacing="0" cellpadding="2" style="font-family:verdana;font-size:12px;color:#000033">
+     <tr>
+		 <td>
+              <b><span style=
+              "font-family: Arial;">Class/Date</span></b>
+          </td>
+          <td>
+              <b><span style="font-family: Arial;">Topic</span></b>
+          </td>
+          <td>
+              <b><span style="font-family: Arial;">Lecture
+              Notes</span></b>
+          </td>
+	</tr>
+	<tr>
+		<td>8/30</td> <td>Intro and UNIX</td>
+        <td>[<a href="UNIX-annotated.pdf">annotated PDF of UNIX paper</a>]</td>
+	</tr>
+	<tr>
+		<td>9/6</td> <td>System R and RDBMS architecture</td>
+        <td>[<a href="lecs/systemr.html">lecture notes</a>] and [<a href="SystemR-annotated.pdf">annotated PDF of System R paper</a>]</td>
+	</tr>
+	<tr>
+		<td>9/8</td> <td>FFS and FS Metadata Mgmt</td>
+        <td>[<a href="lecs/filesys.html">lecture notes</a>], [<a href="FFS-annotated.pdf">annotated PDF of FFS</a>], [<a href="seltzer00-annotated.pdf">annotated PDF of Seltzer, et al.</a></td>
+	</tr>
+	</tr>
+</table>
+<?php include "footer.inc"; ?>
+</body>
+</html>

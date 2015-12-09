@@ -1,0 +1,39 @@
+head	1.1;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2005.09.27.17.45.58;	author joeh;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@</td>
+</tr>
+</table>
+    </td>
+  <tr> 
+    <td width=100 valign="top" height="324" style="font-weight:bold" bgcolor="gray"> 
+      <table width="100%" border="0" cellspacing="0" cellpadding="10">
+      </table>
+    </td>
+  </tr>
+  <tr bgcolor="#333333" valign="middle"> 
+    <td width="740" height="18" colspan="3" style="font-weight:bold"> 
+      <div align="center"><b><font size="1">
+    </td>
+  </tr>
+</table>
+@

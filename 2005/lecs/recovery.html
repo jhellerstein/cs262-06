@@ -1,0 +1,144 @@
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="Author" content="Joseph M. Hellerstein">
+   <meta name="GENERATOR" content="Mozilla/4.75 [en] (WinNT; U) [Netscape]">
+   <title>Recovery Overview</title>
+</head>
+<body>
+&nbsp;
+<table BORDER=0 COLS=2 WIDTH="100%" >
+<tr>
+<td><b>Advanced Topics in Computer Systems</b></td>
+
+<td>
+</td>
+</tr>
+
+<tr>
+<td><b>Joe Hellerstein &amp; Timothy Roscoe</b></td>
+
+<td></td>
+</tr>
+</table>
+
+<center>
+<h2>
+Intro to Recovery: Haerder &amp; Reuter</h2></center>
+Recall that Recovery guarantees Atomicity and Durability.
+<br>Paper outlines issues and options for recovery.
+<p>Types of Failure: a la Gray/Reuter's model of system behavior and what
+can go wrong
+<ul>
+<li>
+Transaction failure</li>
+
+<li>
+System failure</li>
+
+<li>
+Media failure</li>
+</ul>
+Views of the DB
+<ul>
+<li>
+current DB: correct running scenario. disk + buf pool</li>
+
+<li>
+materialized DB: state after a crash.&nbsp; all "propagated" pages (pointed
+to by a level of indirection) on disk</li>
+
+<li>
+physical DB: state after a crash, including unpropagated pages (e.g. uninstalled
+shadows)</li>
+
+<ul>
+<li>
+<b>direct page allocation </b>(e.g. ARIES): materialized = physical</li>
+
+<li>
+<b>indirect page allocation</b> (e.g. System R's shadow pages, versioning
+schemes like POSTGRES): not the case!</li>
+</ul>
+</ul>
+Overwriting Options
+<ul>
+<li>
+<b>ATOMIC</b>: a transaction' updates become visible in <b>materialized
+</b>DB all at once. System R' "shadow paging" scheme did this. Pros/cons?</li>
+
+<li>
+<b>NOT ATOMIC</b>: parts of transactions can be in <b>materialized </b>DB
+without other parts. Pros/cons?</li>
+</ul>
+Buffer Pool Eviction Options
+<ul>
+<li>
+<b>STEAL</b>: a transaction' updates may be flushed from the buffer pool
+at arbitrary times, since another transaction is allowed to "steal" a buffer
+pool frame. Pros/cons?</li>
+
+<li>
+<b>NO STEAL</b>: all of a transaction' updates remain in the buffer pool
+until commit time. Pros/cons?</li>
+
+<li>
+<b>FORCE</b>: at commit time, all modified pages are forced (flushed) to
+disk. Pros/cons?</li>
+
+<li>
+<b>NO FORCE</b>: modified pages may remain in the buffer pool even after
+commit. Pros/cons?</li>
+</ul>
+Log Data
+<ul>
+<li>
+Depending on the option chosen above, need some of <b>UNDO </b>and <b>REDO
+</b>log
+records to support recovery.</li>
+
+<li>
+Log records can be logical (e.g. "inserted tuple ('Gore', 2001) into relation
+Presidents"), or physical (e.g. "byte 74 of page 255 used to be `r' and
+now is `s'"). Pros/cons of each?</li>
+
+<li>
+Physical log records can be before/after images of pages (subpages), or
+various forms of diffs.&nbsp; Beware of idempotency issues!&nbsp; (when
+would this arise?)</li>
+</ul>
+Checkpoints
+<ul>
+<li>
+In order to speed up recovery, it' nice to have "checkpoint" records that
+limit the amout of log that needs to be processed during recovery. It can
+be tricky to do efficient checkpoints.</li>
+</ul>
+State of the Art (as exemplified by ARIES)
+<ul>
+<li>
+Focus on speed <b>and generality</b>, rather than simplicity.</li>
+
+<li>
+Direct page allocation, NOT ATOMIC, STEAL, NO FORCE. This allows the buffer
+manager to make intelligent (i.e. efficient) decisions about when and what
+to flush to disk.</li>
+
+<li>
+Log data is "physiological" -- i.e. some is physical (e.g. B-tree page splits),
+and some is logical (heap-tuple insertions.)</li>
+
+<li>
+Many more details in ARIES paper!</li>
+</ul>
+Keep this taxonomy in mind as you read papers on transaction systems!
+E.g. how does System R, LRVM, POSTGRES fit in here?
+<ul>
+<li>System R: Indirect, ATOMIC, STEAL, NO FORCE</li>
+<li>LRVM: Direct, NOT ATOMIC, NO STEAL, NO FORCE</li>
+<li>POSTGRES: Indirect, ATOMIC, STEAL, FORCE</li>
+<li>Modern DBMSs (ARIES): Direct, NOT ATOMIC, STEAL, NO FORCE</li>
+</uL>
+Effects on performance/scalability?  On complexity?
+</body>
+</html>

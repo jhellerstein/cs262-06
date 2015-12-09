@@ -1,0 +1,41 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<title>P2: Declarative Networking</title>
+<link rel="stylesheet" type="text/css" href="css/style.css" />
+</head>
+<body>
+
+<?php include "header.inc"; ?>
+
+<p>We in the P2 group believe that network routing and distributed query
+processing are intimately connected activities. </p>
+
+<hr>
+<a name="intro">
+
+<P>Overlay networks are used today in a variety of distributed systems
+ranging from file-sharing and storage systems to communication
+infrastructures.  However, designing, building and adapting these
+overlays to the intended application and the target environment is a
+difficult and time consuming process.
+
+<P>To ease the development and the deployment of such overlay networks,
+we have implemented P2, a system which uses a declarative logic
+language to express the overlay networks in a highly compact and
+reusable form. P2 can express a Narada-style mesh network in
+12 rules, and the Chord structured overlay in only
+36 rules.  P2 directly parses and executes such
+specifications using a dataflow architecture to construct and maintain
+the overlay networks.  We describe the P2 approach, how our
+implementation works, and show by experiment that the performance of
+P2 overlays is acceptable.
+
+<span class="cvstag">
+<pre>
+$Id: index.php,v 1.2 2005/09/16 09:44:44 jmh Exp $
+</pre>
+</span>
+<?php include "footer.inc"; ?>
+</body>
+</html>

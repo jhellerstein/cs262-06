@@ -1,0 +1,306 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="Content-Type"
+ content="text/html; charset=iso-8859-1">
+  <meta name="Author" content="Joseph M. Hellerstein">
+  <meta name="GENERATOR"
+ content="Mozilla/4.73 [en] (WinNT; I) [Netscape]">
+  <title>Intro on Transactions</title>
+</head>
+<body>
+&nbsp;
+<table border="0" cols="2" width="100%">
+  <tbody>
+    <tr>
+      <td><b>Advanced Topics in Computer Systems</b></td>
+      <td>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td><b>Joe Hellerstein &amp; Timothy Roscoe<br>
+      </b></td>
+      <td><br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<center>
+<h2>Introduction to Transactions</h2>
+</center>
+<h3>
+Quick History</h3>
+<ul>
+  <li>
+Some of the old hierarchical and network DBs had pretty clever systems
+for handling reliability.&nbsp; BUT -- they had no formalisms to
+describe
+the semantics clearly, and hence few lessons to transfer to other
+systems.</li>
+  <li>
+System R's RSS team, led by Jim Gray, codified the formal notion of <i>transactions
+    </i>and
+    <i>serializability,
+    </i>and System R delivered a working (though inefficient)
+implementation.&nbsp;
+Led to 1998 Turing Award for Gray.</li>
+  <li>
+Our own Christos Papadimitriou did early work formalizing theoretical
+results
+on transactions (and has a book on the topic!)</li>
+  <li>
+Various companies slogged through the details of transactions over the
+years, especially the complex issues of logging and recovery.&nbsp; In
+the 80's and into the 90's, IBM published papers on ARIES, which is the
+classic discussion of the dirty details of logging and recover.&nbsp;
+Many
+industry vets "already knew" this stuff and had done it in commercial
+systems.</li>
+  <li>
+There is an entire industry of Transaction Processing that exists
+outside
+of DBs, and related to distributed applications and services.&nbsp;
+More
+on this later in the semester.</li>
+  <li>
+Generally a field populated by industrial practitioners!</li>
+  <li>
+Since the early days, academic work has focused largely on esoteric
+issues
+of extensions to the flat transaction model.&nbsp; Little of this has
+found
+practical use.</li>
+</ul>
+<h3>
+Background</h3>
+<ul>
+  <li>
+Transactions are concepts that allow a system to guarantee certain
+semantic
+properties.</li>
+  <li>
+These guarantees must be rigorously defined so that people can build
+correct
+systems above them.</li>
+  <li>
+Theory meets practice here in a nice way.</li>
+</ul>
+<h3>
+Kinds of Actions</h3>
+<ul>
+  <li>
+    <b>Unprotected actions</b>: you cannot count on these.&nbsp; It is
+the
+responsibility of higher level actions to check on these if they want
+to
+be sure.</li>
+  <li>
+    <b>Protected actions:</b> actions enclosed inside of transactions.</li>
+  <li>
+    <b>Real actions:</b> actions that are visible outside the
+computer.&nbsp;
+Print to screen, send a web page, output money, drill hole, fire
+missile,
+etc.</li>
+  <ul>
+    <li>
+getting these right is very tricky!</li>
+    <li>
+easier if <i>idempotent</i> (a la "drill hole")</li>
+    <li>
+doable but tricky if you can check the state of the real world
+somehow.&nbsp;
+we'll return to this later if we get to talk about transactional
+networking.</li>
+    <li>
+otherwise impossible to handle!</li>
+  </ul>
+</ul>
+<h3>
+A.C.I.D.</h3>
+A transaction should enjoy the following guarantees:
+<ul>
+  <li>
+    <b>A</b>tomicity: the "all or nothing" property.&nbsp; Programmer
+needn't
+worry about partial states persisting.</li>
+  <li>
+    <b>C</b>onsistency: the database should start out "consistent", and
+at
+the end of transaction remain "consistent".&nbsp; The definition of
+"consistent"
+is up to the database administrator to define to the system; other
+notions
+of consistency must be handled by the application.</li>
+  <ul>
+    <li>
+Gray &amp; Reuter are <i>very</i> confusing on this point.</li>
+  </ul>
+  <li>
+    <b>I</b>solation: a transaction should not see the effects of other
+uncommitted
+transactions.</li>
+  <li>
+    <b>D</b>urability: once committed, the transactions effects should
+not
+disappear (though they may be overwritten by subsequent commited
+transactions).</li>
+</ul>
+Roughly speaking:<br>
+<b>A</b> and <b>D </b>are guaranteed by <i>recovery</i> (usually
+implemented
+via logging)<i>.</i>
+<br>
+<b>C</b> and <b>I</b> are guaranteed by <i>concurrency control</i>
+(usually implemented via locking).
+<br>
+<br>
+It's worth noting that this is not a theoretical formalism, just a
+mnemonic.&nbsp; Don't expect it to be a perfect factoring of the issues
+-- there is overlap of concerns among the four.<br>
+<h3>
+Concurrency Control &amp; Serializability</h3>
+CS186 material you might not know.
+<ul>
+  <li>
+We want to allow multiple transactions to operate concurrently.&nbsp;
+(Why?)</li>
+  <li>
+Need a crisp definition of acceptable and unacceptable concurrency</li>
+  <ul>
+    <li>
+build that on a notion of acceptable <i>orders of operation</i></li>
+    <li>
+DB only understands simple data-oriented operations: read, write,
+begin,
+commit, abort</li>
+    <li>
+order of operations captured in a transaction schedule:</li>
+    <ul>
+      <li>
+transactions (<i>T<sub>i</sub></i>) and data objects (<i>a...z</i>)</li>
+      <li>
+all operations of a transactions occur in the order specified by the
+transaction</li>
+      <li>
+schedule captures the interleaving of the operations in time</li>
+      <ul>
+        <li>
+e.g. <i>R<sub>1</sub>(a), R<sub>2</sub>(a), W<sub>2</sub>(a), W<sub>1</sub>(a),</i></li>
+      </ul>
+    </ul>
+    <li>
+One reasonable definition of correct order of operation: <i>serial
+schedules</i></li>
+    <ul>
+      <li>
+rough defn: those schedules that have no interleaving of operations
+across
+xactions</li>
+      <li>
+        <i>note:</i> in this definition, <i>any </i>serial schedule
+is correct
+-- order of transactions isn't guaranteed in any way!</li>
+    </ul>
+    <li>
+What we'd like</li>
+    <ul>
+      <li>
+to get the effect of serial schedules, but still get lots of concurrency</li>
+      <li>
+        <i>serializable schedules</i> are those schedules that are
+"equivalent"
+to serial schedules</li>
+      <ul>
+        <li>
+definition of equivalence: produces the same final state as a serial
+schedule</li>
+      </ul>
+    </ul>
+    <li>
+What could mess up serializability?</li>
+    <ul>
+      <li>
+        <i>conflicts: </i>two transactions share a data item, and at
+least one
+writes it.&nbsp; In time, we have RW (unrepeatable read), WR (dirty
+read),
+and WW (lost write) conflicts.</li>
+      <li>
+These conflicts can be OK if you're careful!</li>
+      <li>
+Can draw a <i>serializability</i> graph (directed), where nodes are
+transactions,
+and edges are conflicts in order of time.</li>
+      <li>
+Definition: 2 schedules are <i>conflict equivalent</i> if they have
+the
+same actions, and each pair of conflicting actions is ordered the same
+way.</li>
+      <li>
+Definition: a schedule is <i>conflict serializable</i> if it is
+conflict
+equivalent to a serial schedule.</li>
+      <ul>
+        <li>
+Note: some serializable schedules are <i>NOT</i> conflict serializable!</li>
+      </ul>
+      <li>
+        <b>Theorem:</b> A schedule is conflict serializable if and only
+if its
+serializability graph is acyclic.</li>
+      <ul>
+        <li>
+Do you see the proof?</li>
+      </ul>
+    </ul>
+  </ul>
+  <li>
+Now we have a definition, and a way to be sure we're
+serializable.&nbsp;
+We need a <i>mechanism </i>to enforce serializability.</li>
+  <ul>
+    <li>
+      <b>Two-Phase Locking (2PL)</b>: based on 3 rules</li>
+    <ol>
+      <li>
+before reading an object, a transaction must get a shared lock on it</li>
+      <li>
+before writing an object, a xaction must get an exclusive lock on it</li>
+      <li>
+once a xaction releases one lock, it cannot request any more locks
+(hence
+the name 2PL)</li>
+    </ol>
+    <li>
+      <b>Theorem:</b> 2PL ensures that the precedence graph generated
+by transactions
+will be acyclic -- so serializability is enforced.</li>
+    <ul>
+      <li>
+Can you see the proof here?</li>
+    </ul>
+    <li>
+      <b>Strict 2PL</b> is a variant of 2PL in which a xaction must
+drop all
+its locks at once.</li>
+    <ul>
+      <li>
+has nice features: avoids "cascading aborts", and guarantees
+"recoverable"
+schedules.
+      </li>
+    </ul>
+  </ul>
+</ul>
+<h3>
+Recovery</h3>
+Just you wait!&nbsp; We will dig (deep) into this subject in subsequent
+reading on ARIES.
+<ul>
+  <li>
+Main mechanism used: <b>Write-Ahead Logging (WAL)</b></li>
+</ul>
+</body>
+</html>

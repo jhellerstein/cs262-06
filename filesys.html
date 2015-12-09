@@ -1,0 +1,213 @@
+<html>
+  <!DOCTYPE html PUBLIC "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+  <meta http-equiv="Content-Type"
+		content="text/html">
+  <meta name="Author" content="Joseph M. Hellerstein">
+  <meta name="GENERATOR"
+		content="Mozilla/4.73 [en] (WinNT; U) [Netscape]">
+  <title>CS262a: FFS and Journaling</title>
+</head>
+<body>
+  &nbsp;
+  <table border="0" cols="2" width="100%">
+	<tbody>
+      <tr>
+		<td><b>Advanced Topics in Computer Systems</b></td>
+		<td>
+		  <div align="right"><b>Lecture 3<br>
+		  </b></div>
+		</td>
+      </tr>
+      <tr>
+		<td><b>Joe Hellerstein &amp; Eric Brewer<br>
+		</b></td>
+		<td><br>
+		</td>
+      </tr>
+	</tbody>
+  </table>
+  <center>
+	<h2> UNIX Fast File System and Modern Filesystem Metadata Handling</h2>
+  </center>
+  <h3>FFS</h3>
+  <p>First, the original UNIX filesystem:</p>
+  <ul>
+	<li> All operations made to appear synchronous</li>
+	<li> All disk blocks the same 512byte size.</li>
+    <li>Disk has 3 sections:
+	  <ul>
+		<li>Superblock (#datablocks, max#files, freelist ptr)</li>
+		<li>inode tree</li>
+		<li>data blocks</li>
+	  </ul>
+	<li>inodes stored at front of filesystem</li>
+<br>
+	<li> Performed abominably: as low as 2% of
+	  potential BW of the spinning disk platters.  Why?</li>
+	<ul>
+	  <li>small block size, </li>
+	  <li>poor freelist organization -- "consecutive" blocks are far apart</li>
+	  <li>poor inode locality (inodes far from data, inodes of
+		different files in a directory not close to each other)</li> 
+	</ul>
+  </ul>
+
+  <p>What are the main issues in the paper?</p>
+  <ul>
+	<li>Performance improvements based on disk layout: storage/xfer units and
+	data placement</li>
+	<li>Feature enhancements including redundancy for superblocks,
+	softlinks, Long file names, Support to do "advisory", "soft" locks
+	on files, Atomic rename and Quotas.
+  </ul>
+  <p>Block size:</p>
+  <ul>
+	<li>Increase the block size.  Pros/Cons?</li>
+	<li>Fragments: 2,4 or 8 per block</li>
+	<li>For small files and ends of files.</li>
+	<li>Remind you of anything else?</li>
+	</ul>
+<p>Unorganized Freelist</p>
+<ul>
+  <li>Starts linear and packed, over time becomes random.  Hard to fix
+  for good</li>
+  <li>Instead, switch to bitmaps for free space representation.</li>
+</ul>
+  <p>Locality</p>
+  <ul>
+	<li>Make sure not to overfill disk, and you'll usually find a free
+	  block nearby,</li>
+	<li>Attempt to <i>cluster</i> data: i.e. keep related things close,
+	  unrelated things far apart.  Define related. Define close/far.  </li>
+	<li>Typical FS definition of "related":
+	  <ul>
+		<li>blocks in a file in sequence.  Files and the inodes in a
+		  directory.</li>
+		<li>Try to keep all files in a directory in same cylinder
+		  group.</li>
+		<li>Try to get directories spread out across cylinder
+		  groups.</li>
+		<li>big files spread across cylinder groups to prevent havign a
+		  single file per cylinder group</li>
+		<li>Cylinder group: copy of superblock, fixed # of inodes, bitmap of
+		  free blocks, usage summary for highlevel alloc policy, data
+		  blocks.</li>
+	  </ul>
+	<li>FFS definition of close: skip-sector</li>
+  </ul>
+
+<p>Superblock replication</p>
+<ul>
+  <li>spatially diverse replication of key data, on a single
+  device!</li>
+  <li>Redundancy suggests metadata is more important than data?  we'll
+  see this in a minute...</li>
+</ul>
+
+  <p>Metadata updates are on key source of FFS seek overhead. </p>
+  <ul>
+	<li> Metadata writes are poorly localized. </li>
+	<ul>
+	  <li> E.g., extending a file requires writes to the inode, direct and 
+		indirect blocks, cylinder group bit maps and summaries, and 
+		the file block itself. </li>
+	</ul>
+	<li>
+	  Metadata writes can be delayed, but this incurs a higher risk 
+	  of file system corruption in a crash. 
+	</li>
+	<li> If you lose your metadata, you are dead in the water. 
+	<li> FFS schedules metadata block writes carefully to limit the 
+	  kinds of inconsistencies that can occur. Some metadata updates
+	  must be synchronous on controllers that don't respect order of
+	  writes.
+	</li>
+  </ul>
+
+<h3>Seltzer, et al</h3>
+
+<p>FFS metadata is basically superblock and inodes.  At minimum, want
+  to have a valid superblock and valid inodes.  How to assure
+  this?</p> 
+<ul>
+  <li> may need atomic update of multiple blocks (e.g. directory and the block it refers to)
+  <li>solution one: ordered writes (simple for manipulating subtrees)
+  <li>solution two: a more general mechanism for arbitrary
+  transactions: write-ahead logging (WAL).
+</ul>
+
+<p>Soft updates postpone the writes, and tracks dependencies (a poset
+of actions) for subsequent writing.  Problem: cyclic dependencies.
+(Example from paper).  Solution: update pages with selected actions as
+needed ("rollback/roll-forward").  Needed because of update-in-place.
+</p>
+<ul>
+<li>Key feature is asynchrony of metadata updates.  This is not just a soft updates thing. </li>
+<li> Another key feature is background delete of data (delete metadata
+now, reclaim data later).  Again, not tied to soft updates per
+se.</li> 
+</ul>
+<p>Journaling filesystem basically does WAL-based transactional
+recovery for metadata.  Each cached (metadata) page has a first-update
+LSN (since paged in) and a last-update LSN.  The former allows you to
+do log truncation: log recs before the oldest first-update LSN in
+cache can be discarded.  The latter helps you ensure the WAL property:
+before writing back the page, you flush the log up to the last-update
+LSN.  Superblock keeps location of beginning of log, which changes on
+each flush!  (Not the way ARIES works, BTW).  "Checkpoint" in this
+context means flush the log (not like an ARIES checkpoint record.) </P>
+
+<p>Notes:</p>
+<ul>
+  <li>file vs. WAFS.</li>
+
+<li>group commit.  not doing group commit makes all the journaling
+  numbers questionable -- should be able to achieve much better
+  throughput at the expense of latency. </li>
+
+<li>async vs. sync logging.  What is async logging?  Each update will
+  generate a consistent result, but application code may not have the
+  right picture of which updates actually succeeded.</li>
+<li>What is soft updates trying to guarantee?  "file system integrity
+  but not durability". What does that mean?  Define integrity?  No
+  dangling inodes.  Is the soft semantics worth the performance gain?   
+</li>
+<li>the word "semantics" is bandied about a lot here, but is very
+  operational (the following individual things can go wrong...)
+  E.g. two versions of a file name can be in directory on crash during
+  a rename. </li>
+</ul>
+
+<h3>More on Journaling</h3>
+<p>A helpful paper on journaling filesystems is Prabhakaran
+& the Arpaci-Dusseaus' <a
+href="http://www.cs.wisc.edu/adsl/Publications/sba-usenix05.html">Analysis
+and Evolution of Journaling File Systems<a> from USENIX '05.  It
+analyzes a number of the systems that are out there.  A couple
+examples (more in the paper):</p>
+<ul>
+<li>Linux Ext3:</li>
+  <ul>
+    <li>Three modes:</li>
+	<ul>
+	  <li> writeback mode: metadata is journaled, but journal needn't be write-ahead.  Guarantees consistent metadata, but can have inconsistent data blocks.</li>
+	  <li> ordered journaling mode much like Seltzer paper</li>
+	  <li> data journaling mode: both metadata & data block updates
+	  are journaled.  Can be faster or slower than ordered.  Faster on
+	  random async writes.</li>
+	</ul>
+	<li>Compound Transaction groups many updates into a single commit.  Good if frequent updates to same block (e.g. free space bitmap) </li>
+	<li>full block logging, not diffs.</li>
+  </ul>
+  <li>NTFS</li>
+  <ul>
+	<li>Every object in NTFS is a file. Even metadata is stored in
+	files.  The journal is a file stored in the middle of the FS.</li>
+	<li>NTFS does only metadata journaling.  Does not do block-level journaling, does change records.  </li>
+	<li>Does indeed do WAL ("ordered journaling")</li>
+  </ul>
+</ul>
+</body>
+</html>

@@ -6,7 +6,7 @@
 <body>
 
 {% include header.html %}
-<a href="2005/notes.php"><b>Last Year's Notes</b></a>
+<a href="2005/notes.html"><b>Last Year's Notes</b></a>
 {% include footer.html %}
 </body>
 </html>

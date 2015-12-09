@@ -33,7 +33,7 @@ P2 overlays is acceptable.
 
 <span class="cvstag">
 <pre>
-$Id: index.php,v 1.2 2005/09/16 09:44:44 jmh Exp $
+$Id: index.html,v 1.2 2005/09/16 09:44:44 jmh Exp $
 </pre>
 </span>
 {% include footer.html %}

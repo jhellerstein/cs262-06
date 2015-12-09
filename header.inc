@@ -3,7 +3,7 @@
     <td bgcolor="#111144" height="29" 
     colspan="2"><img src="http://db.cs.berkeley.edu/jmh/img/ucbseal.gif" 
     width=90></td>
-    <td height="29" colspan="1"><a href="index.php"><img
+    <td height="29" colspan="1"><a href="index.html"><img
     src="images/title-bc.png" height="60"></a></td>
   </tr>
   <tr> 

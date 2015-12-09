@@ -19,7 +19,7 @@ two different software systems disciplines.  The class is based on
 lively discussion of important papers from the literature, and a research
 project.</p>
 <br>
-<a href="posters.php"><font color="red">A note about posters</font></a>
+<a href="posters.html"><font color="red">A note about posters</font></a>
 {% include footer.html %}
 </body>
 </html>

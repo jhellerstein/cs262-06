@@ -1,9 +1,9 @@
 		<ul id="menu"><br>
-		<li><a href="index.php">Overview</a></li>
-		<li><a href="p2people.php">People</a></li>
-		<li><a href="p2pubs.php">Papers</a></li>
-		<li><a href="p2talks.php">Talks</a></li>
-        <li><a href="p2related.php">Related</a></li>
+		<li><a href="index.html">Overview</a></li>
+		<li><a href="p2people.html">People</a></li>
+		<li><a href="p2pubs.html">Papers</a></li>
+		<li><a href="p2talks.html">Talks</a></li>
+        <li><a href="p2related.html">Related</a></li>
 		</ul>
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img src="images/down.png">
 

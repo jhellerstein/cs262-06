@@ -5,11 +5,11 @@
 </head>
 <body>
 
-<?php include "header.inc"; ?>
+{% include header.html %}
 We will read and discuss 2-4 papers per week.&nbsp; Many of the
 papers for the class will be available either on-line, or as handouts
 in a previous class. <br><br>
 <a href="2005/syllabus.php"><b>Last Year's Syllabus</b></a>
-<?php include "footer.inc"; ?>
+{% include footer.html %}
 </body>
 </html>

@@ -6,7 +6,7 @@
 </head>
 <body>
 
-<?php include "header.inc"; ?>
+{% include header.html %}
 
 <p>CS262a is an introductory graduate course on computer systems
 research, including operating systems, database systems, and internet
@@ -20,6 +20,6 @@ lively discussion of important papers from the literature, and a research
 project.</p>
 <br>
 <a href="posters.php"><font color="red">A note about posters</font></a>
-<?php include "footer.inc"; ?>
+{% include footer.html %}
 </body>
 </html>

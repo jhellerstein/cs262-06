@@ -5,7 +5,7 @@
 </head>
 <body>
 
-<?php include "header.inc"; ?>
+{% include header.html %}
 
 <table width="100%" border="0" cellspacing="0" cellpadding="2" style="font-family:verdana;font-size:12px;color:#000033">
      <tr>
@@ -113,6 +113,6 @@
 		<td>[<a href="lecs/25-congestion.pdf">lecture notes</a>]</td>
 	</tr>
 </table>
-<?php include "footer.inc"; ?>
+{% include footer.html %}
 </body>
 </html>

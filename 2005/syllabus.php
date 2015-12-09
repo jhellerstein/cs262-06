@@ -5,7 +5,7 @@
 </head>
 <body>
 
-<?php include "header.inc"; ?>
+{% include header.html %}
 We will read and discuss 2-4 papers per week.&nbsp; Many of the
 papers for the class will be available either on-line, or as handouts
 in a previous class. <br><br>
@@ -408,6 +408,6 @@ Butler Lampson. [No summary required]
     </td>
    </tr>
   </table>
-<?php include "footer.inc"; ?>
+{% include footer.html %}
 </body>
 </html>

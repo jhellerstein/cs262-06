@@ -28,7 +28,7 @@ text
 </head>
 <body>
 
-<?php include "header.inc"; ?>
+{% include header.html %}
 
 <table width="100%" border="0" cellspacing="0" cellpadding="2" style="font-family:verdana;font-size:12px;color:#000033">
      <tr>
@@ -73,7 +73,7 @@ text
         <td>[<a href="lecs/ACPM-BufMgr.htm">lecture notes</a>] [<a href="lecs/hc92-comments.pdf">annotated PDF of ACPM paper</a>] [<a href="lecs/5minrule-comments.pdf">annotated PDF of the 5 Minute Rule</a>]</td> 
 	</tr>
 </table>
-<?php include "footer.inc"; ?>
+{% include footer.html %}
 </body>
 </html>
 @

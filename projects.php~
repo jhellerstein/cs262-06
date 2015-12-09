@@ -5,7 +5,7 @@
 </head>
 <body>
 
-<?php include "header.inc"; ?> 
+{% include header.html %} 
 <p>You are encouraged to design your own project.  To get you
 thinking, here are some ideas we had; not surprisingly, they tend to
 focus on projects we are already working on, including our joint
@@ -325,6 +325,6 @@ implementation using a modified OS like BSD or Linux over Xen.
 </li>
 </ul>
 
-<?php include "footer.inc"; ?>
+{% include footer.html %}
 </body>
 </html>

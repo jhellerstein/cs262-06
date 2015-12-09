@@ -5,10 +5,10 @@
 </head>
 <body>
 
-<?php include "header.inc"; ?>
+{% include header.html %}
 
 
 
-<?php include "footer.inc"; ?>
+{% include footer.html %}
 </body>
 </html>

@@ -6,7 +6,7 @@
 </head>
 <body>
 
-<?php include "header.inc"; ?>
+{% include header.html %}
 
 <p>We in the P2 group believe that network routing and distributed query
 processing are intimately connected activities. </p>
@@ -36,6 +36,6 @@ P2 overlays is acceptable.
 $Id: index.php,v 1.2 2005/09/16 09:44:44 jmh Exp $
 </pre>
 </span>
-<?php include "footer.inc"; ?>
+{% include footer.html %}
 </body>
 </html>

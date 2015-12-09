@@ -5,8 +5,8 @@
 </head>
 <body>
 
-<?php include "header.inc"; ?>
+{% include header.html %}
 <a href="2005/notes.php"><b>Last Year's Notes</b></a>
-<?php include "footer.inc"; ?>
+{% include footer.html %}
 </body>
 </html>
